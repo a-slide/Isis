@@ -1,33 +1,47 @@
 ### RELATIVE QUANTITY OF READS ###
 
-Overall quantity of reads = 100000
+# Overall quantity of reads
+read_num = 100000
 
-# The sum of frequencies must be equal to 1 
-Host genome frequency = 0.45
-Virus genome frequency = 0.45
-True junctions frequency = 0.09
-False junctions frequency = 0.01
+### Relative frequencies of DNA source in fastq (sum of frequencies should be equal to 1) 
+# Host genome frequency
+hg_freq = 0.45
+# Virus genome frequency
+vg_freq = 0.45
+# True junctions frequency
+tj_freq = 0.09
+# False junctions frequency
+fj_freq = 0.01
 
-Mean number of sampling in true junctions = 100
-Number of sampling in false junctions = 1
+# Mean number of sampling in true junctions
+ntj_freq = 100
+# Number of sampling in false junctions
+nfj_freq = 1
 
 ### EXPERIMENTAL PARAMETERS ###
 
-Read length = 150
+# Read length
+read_len = 150
 
-# If single end use FALSE
-Pair end = TRUE
+# Sequencing mode. If single end set "se" else if paired ends set "pe"
+seq_mod = pe
 
-# Options needed if pair end
-Max sonication size = 1000
-Min sonication size = 150
-Mean sonication size = 500 
+## Options to set up if paired end mode
+# Maximal Minimal and mean sonication size
+max_sonic = 1000
+min_sonic = 150
+mean_sonic = 500 
 
-# Quality score options
-Quality score scale = Illumina
-Mean start quality = 20
-Mean middle quality = 25
-Mean end quality = 20
-Start quality variation range = 5
-Middle quality variation range = 5
-End quality variation range = 20
+## Quality score options
+# Quality score scale = solexa (CASAVA < 1.3), illumina (CASAVA 1.3 to 1.7), sanger (which is CASAVA >= 1.8)
+qual_scale = illumina
+
+# Mean start, middle and end quality 
+start_qual = 20
+mid_qual = 25
+end_qual = 20
+
+# Range of quality variation at start, middle and end of reads
+start_qvar = 10
+mid_qvar = 5
+end_qvar = 20
