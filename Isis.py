@@ -4,127 +4,88 @@
 import gexf
 from sys import argv as argv
 from Bio import SeqIO
-from Bio import pairwise2
 from multiprocessing import Pool
+from pprint import pprint
 
-########################################################################
+########################################################################################################################
 
-# Global variable to simplify communication between functions
-HOSTGENOME = []
-VIRUSGENOME = []
 
-########################################################################
 
 def main ():
     """main function"""
-
-    # Try bloc to catch errors if input data files are empty are incorectly formated
-    try:
-        fasta_filelist_import()
-    except MissingDataException, ex:
-        print (ex)
-        exit (1)
-
-    print_fasta ()
+    filename = argv[0]
+    conf = ConfFileParser()
 
     exit (0)
+    
 
 
-def fasta_filelist_import():
-    """Iterative filling of a list of sequence from the list of file given in argument"""
+########################################################################################################################
 
-    print '\nStarting to import data...\n'
+class ConfFileParser:
+"""This can be used to parse file containing a list of variables and its associated values
+The separator beetween vaiable and value must be the same for all field and can be customized by users (by default =)
+the class store the list of variable in a dictionnary named conf_dict"""
+    
+    # FONDAMENTAL METHODS
+    
+    def __init__ (self, filename, separator="="):
+        # Object constructor initialized the path of the field to parse and a custom separator
+        self.conf_dict = makemake_conf_dict (self, filename, separator)
+    
+    def __str__(self):
+        # Short description string returned by print and str 
+        print "ConfFileParser ... \n"
+        
+    def __repr__ (self):
+        # Long description string used by interpreter and repr
+        print "ConfFileParser ... \n"
+        pprint (conf_dict)
+        
+    # GETERS
+    
+    def get_conf_dict (self):
+        return conf_dict
+    
+    # Give acces to individual values in conf_dict by using its key name.
+    def get_conf_var (self, varkey ):
+        return conf_dict[varkey]
+        
+    # PRIVATE SUPPORT METHODS
+    
+    def make_conf_dict (self, filename, separator)
+        return {name : value for name, value in conf_list()}
+        
+    def make_conf_list (self, filename, separator)
+        with open (filename)
+            return [
+        
+        except IOError:
+            print '\n', filename, 'is not readable. The file will be ignored\n'
 
-    # For each filepath in arguments
-    for filename in argv[4:]:
-        fasta_file_import(filename)
-
-    # Raising exception if the sequence list is empty after parsing
-    if not LISTSEQ:
-        raise MissingDataException ("File(s) are either empty or not in fasta format. Please verify your files")
-
-
-def fasta_file_import(filename):
-    """Open an parse a fasta containing file with SeqIO.parse and return a list of Biopython sequence objects"""
-
-    try: # Bloc try to manage opening errors
-        # Iterative call of SeqIO.parse from Biopython and concatenation of sequences
-        for seq_record in SeqIO.parse(filename, "fasta"):
-            LISTSEQ.extend([seq_record])
-        print '\n', filename, 'had been imported\n'
-
-    except IOError:
-        print '\n', filename, 'is not readable. The file will be ignored\n'
+    
+    
+    
+    
+    
+    
+    
+    def 
 
 
-def print_fasta():
-    """May be used to verify imported sequences"""
-    for seq in LISTSEQ:
-        print 'ID        ', (seq.id)
-        print 'Sequence  ', (repr(seq.seq))
-        print 'Lenght    ', (len(seq)), 'bp\n'
-
-        print (len(LISTSEQ)), 'fasta sequences had been imported\n'
-
-
-
-
-
+########################################################################################################################
 
 
 def usage():
     """Simple usage function"""
     print "Usage: ", argv[0], "<Number of available threads><Threshold> <output> <fasta file 1> [<fasta file 2, ...]"
     print "\tExample : ", argv[0], " 4  1000  my_alignment my_seq.fasta  my_other_seq.fasta"
-    print "\tNumber of thread is used to distribute processing thanks to the multiprocessing package"
-    print "\tThreshold value is used to filter low score interactions (use 0 to obtain a complete graph)"
-    print "\tOutput will be used as a prefixe for the gexf output file"
-    print "\One or sereval files containing fasta sequence(s) are needed as input data\n"
-    print "\tA sequence in FASTA format consists of: "
-    print "\t\tOne line starting with a '>' sign, followed by a sequence identification code."
-    print "\t\tIt is optionally be followed by a textual description of the sequence."
-    print "\t\tOne or more lines containing the sequence itself (Usually 80 characters blocks).\n"
-    print "\tA file in FASTA format may comprise more than one sequence.\n"
-    print "\tRequire the following python packages :"
-    print "\tBiopython, multiprocessing and gefx (http://pythonhosted.org/pygexf/users.html)"
-
-
-
-########################################################################
-
-class ConfFileParser:
-
-
-
-
-
-
-
-
-########################################################################
-
-class MissingDataException(Exception):
-    """Custom Exception Class to handle empty or incorrectly formated data files"""
-    def __init__(self, msg):    # Object constructor initialized with a custom user message
-        self.msg = msg
-
-    def __str__(self):          # String returned by print
-        return "MissingDataException\n" + self.get_msg()
-
-    def get_msg (self):         # msg getter
-        return self.msg
-
-########################################################################
+    
+########################################################################################################################
 
 if __name__ == '__main__':
-    if len(argv) < 4:        # if not enought arg call usage function
+    if len(argv) < 1:        # if not enought arg call usage function
         usage()
     else:
         main()              # else call the main function
 
-if __name__ == '__fasta_filelist_import__':
-    fasta_filelist_import()
-if __name__ == '__fasta_file_import__':
-    fasta_file_import()
-if __name__ == '__print_fasta__':
-    print_fasta()
