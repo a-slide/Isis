@@ -1,47 +1,52 @@
 ### RELATIVE QUANTITY OF READS ###
 
 # Overall quantity of reads
-read_num = 100000
+read_num	100000
 
-### Relative frequencies of DNA source in fastq (sum of frequencies should be equal to 1) 
+### Relative frequencies of DNA source in fastq (sum of frequencies should be equal to 1)
+
 # Host genome frequency
-hg_freq = 0.45
+hg_freq	0.45
 # Virus genome frequency
-vg_freq = 0.45
+vg_freq	0.45
 # True junctions frequency
-tj_freq = 0.09
+tj_freq	0.09
 # False junctions frequency
-fj_freq = 0.01
+fj_freq	0.01
 
+###
 # Mean number of sampling in true junctions
-ntj_freq = 100
+ntj_freq	100
 # Number of sampling in false junctions
-nfj_freq = 1
+nfj_freq	1
 
-### EXPERIMENTAL PARAMETERS ###
-
+# Avoid read sampling in repeat regions (lowercase characters in fasta sequences)
+avoid_repeats	True
 # Read length
-read_len = 150
+read_len	150
 
 # Sequencing mode. If single end set "se" else if paired ends set "pe"
-seq_mod = pe
+seq_mod	pe
 
 ## Options to set up if paired end mode
 # Maximal Minimal and mean sonication size
-max_sonic = 1000
-min_sonic = 150
-mean_sonic = 500 
+max_sonic	1000
+min_sonic	150
+mean_sonic	500 
 
 ## Quality score options
 # Quality score scale = solexa (CASAVA < 1.3), illumina (CASAVA 1.3 to 1.7), sanger (which is CASAVA >= 1.8)
-qual_scale = illumina
+qual_scale	illumina
 
 # Mean start, middle and end quality 
-start_qual = 20
-mid_qual = 25
-end_qual = 20
+start_qual	20
+mid_qual	25
+end_qual	20
 
 # Range of quality variation at start, middle and end of reads
-start_qvar = 10
-mid_qvar = 5
-end_qvar = 20
+start_qvar	10
+mid_qvar	5
+end_qvar	20
+
+# Number de available thread for distributed computing
+nb_thread	12 
