@@ -14,14 +14,19 @@ tj_freq	0.09
 # False junctions frequency
 fj_freq	0.01
 
-###
 # Mean number of sampling in true junctions
 ntj_freq	100
 # Number of sampling in false junctions
 nfj_freq	1
 
-# Avoid read sampling in repeat regions (lowercase characters in fasta sequences)
-avoid_repeats	True
+## Allow or forbid sampling in specific DNA regions
+# repeat regions (lowercase characters in fasta sequences)
+allow_repeats	False
+# Ambigous DNA region (extensive IUPAC code)
+allow_ambigous	False
+# Duplicated reads. If true duplicates will be postfixed with an unique id number
+allow_duplicate	False
+
 # Read length
 read_len	150
 
