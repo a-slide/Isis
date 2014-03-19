@@ -34,10 +34,14 @@ read_len	150
 seq_mod	pe
 
 ## Options to set up if paired end mode
-# Maximal Minimal and mean sonication size
+# Maximal Minimal and mean sonication size max > mean > min
 max_sonic	1000
 min_sonic	150
-mean_sonic	500 
+mean_sonic	500
+# Parameter used for shapping the beta distribution of somication size.
+# Lower value = larger width of sonication peak (5 to 10), Higher value = thiner peak (10 to 20). Need to be higher than 2
+certainty	10
+
 
 ## Quality score options
 # Quality score scale = solexa (CASAVA < 1.3), illumina (CASAVA 1.3 to 1.7), sanger (which is CASAVA >= 1.8)

@@ -2,10 +2,7 @@ class ConfFileParser:
     """This can be used to parse file containing a list of variables and its associated values
     The separator beetween vaiable and value must be the same for all field and can be customized by users (by default =)
     the class store the list of variable in a dictionnary named conf_dict"""
-
-# DECLARATION OF VARIABLES
-    # Dictionnary to store configuration parameters
-    conf_dict = {}
+    
 
 # FONDAMENTAL METHODS
 
@@ -19,14 +16,15 @@ class ConfFileParser:
 
     # Short description string returned by print and str
     def __str__(self):
-        return "Instance of ConfFileParser\n"
+        return "<Instance of ConfFileParser\n"
 
     # Long description string used by interpreter and repr
     def __repr__ (self):
-        result = "Instance of ConfFileParser\n\n"
+        result = "<Instance of ConfFileParser\n"
         for key,value in self.conf_dict.items():
-            result = result + key + "\t" + value + "\n"
-
+            result .= key + "\t" + value + "\n"
+        
+        result .= ">"
         return result
 
 # GETERS
