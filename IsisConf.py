@@ -1,10 +1,54 @@
-class ConfFileParser:
-    """This can be used to parse file containing a list of variables and its associated values
-    The separator beetween vaiable and value must be the same for all field and can be customized by users (by default =)
-    the class store the list of variable in a dictionnary named conf_dict"""
+class IsisConf:
+    """Class description"""
 
-# DECLARATION OF VARIABLES
-    # Dictionnary to store configuration parameters
-    conf_dict = {}
+########################################################################################################################
+#   FONDAMENTAL METHODS
+########################################################################################################################
+    
+    def __init__(self):
+        """Object constructor"""
+        pass
+    
+    def __repr__(self):
+        """Long representation"""
+        return
+    
+    def __str__(self):
+        """Short representation"""
+        return
+    
+########################################################################################################################
+#   GETERS
+########################################################################################################################
 
-# FONDAMENTAL METHODS
+    def get_variable (self):
+        """return variable"""
+        return self.variable
+
+########################################################################################################################
+#   PREDICATE
+########################################################################################################################
+
+    def is_something (self):
+        """return boolean"""
+        if something:
+            return True
+        else:
+            return False
+
+
+########################################################################################################################
+#   ACTION METHODS
+########################################################################################################################
+
+    def do_something (self):
+        """Do something outside the object"""
+        pass
+
+########################################################################################################################
+#   PRIVATE METHODS
+########################################################################################################################
+
+    def _do_something (self):
+        """Do something inside the object"""
+        pass

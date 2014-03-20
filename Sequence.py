@@ -296,6 +296,13 @@ class Reference (Sequence):
         seqDict = {}
         header = None
 
+
+
+### readlines()
+### convert to list
+### convert to dict
+
+
         try: # bloc try pour gerer l'erreur d'ouverture de fichier
             with open(filename) as fasta:
                 for line in fasta: # itère sur tt les lignes du fasta
