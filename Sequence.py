@@ -14,7 +14,7 @@ class Sequence:
 
     def __init__ (self):
         
-        # Empty dictionnary to store sequences and description
+        # Empty dictionnary to store biopython seqRecord
         self.seq_dict = {}
         
         # Strings containing allowed DNA bases
@@ -31,7 +31,7 @@ class Sequence:
 #   GETERS
 ########################################################################################################################
 
-    # Grant acces to the complete dictionary
+    # Give acces to the complete dictionary
     def getDict (self):
         return self.seq_dict
 
@@ -45,25 +45,30 @@ class Sequence:
 ########################################################################################################################
 
     # TODO Catch exception in case no read was found
-    # PARRALELIZE READ Picking
+    # TODO PARRALELIZE READ Picking
     def generate_read_dict (self, nread, read_len, repeats = False, ambigous = False, duplicate = False,
                             pair = False, min = None, max = None, mean = None, certainty = None):
-        """Generate a dictionnay of sequence containg the name (with localisation in mother sequence) size and DNA sequence"""
+        """Generate a list of sequence containg the name (with localisation in mother sequence) size and DNA sequence"""
         
         read_dict = {}
-        ndup = i = 0
-        alpha = beta = None
+        alpha = beta = ndup = nfail = i = 0 # Counter allowing to iterate in case 
         
         # Calculate the parameters of shape for the beta distribution to mimick DNA shearing distribution by sonication
         if pair:
             alpha, beta = self._beta_shape(min, max, mean, certainty)
         
         while i < nread:
+            # Try to generate a valid read. Return a list with name, length [+frag size if pair], sequence [both if pair]
             read = self._generate_read (read_len, repeats, ambigous, pair, alpha, beta, min, max)
             
             # In case it is impossible to generate a valid read in seq_dict
             if not read:
-                break
+                nfail +=1
+                # if the number of fail to generate reads is low try to resample
+                if nfail < nread:
+                        continue
+                    # If the maximal number of faillure when trying to generate reads was exceded break
+                    break
             
             # If the dictionnary already contains this entry (same sequence name)
             if read[0] in read_dict:
@@ -71,12 +76,12 @@ class Sequence:
                 
                 # If duplicates are not allowed
                 if not duplicate:
-                    # If the maximal number of tries to generate non duplicated reads was not yet exceded = cancel count and try to resample
+                    # If the maximal number of tries to generate non duplicated reads is low try to resample
                     if ndup < nread:
                         continue
                     # If the maximal number of tries to generate non duplicated reads was exceded break out the loop  
                     break
-                        
+                    
                 # If duplicates are allowed
                 else:
                     # Adding a number to the name (starting at 2) and checking if the new name is non in dict
@@ -87,7 +92,7 @@ class Sequence:
                             break
                             
             # Finaly if the read was already in dict or if it was renamed add a new entry in dict
-            read_dict[read[0]] = [read[1], read[2]]
+            read_dict[read[0]] = read[1:]
             i+=1
         
         len_dict = len(read_dict)
@@ -108,8 +113,8 @@ class Sequence:
     def _generate_read (self, read_len, repeats, ambigous, pair, alpha = None, beta = None, min = None, max = None):
         """Generate a candidate read or read pair of a given lenght with or without repeats and ambigous DNA bases"""
         
-        # Guard condition if not possible to find a valid pair after 100 tries
-        for count in range (100):
+        # Guard condition if not possible to find a valid pair after 10 tries
+        for count in range (10):
             
             # Pick a random sequence in dictionnary proportionally to its length
             ref_seq = self._random_seq ()
@@ -122,18 +127,19 @@ class Sequence:
                 frag_len = read_len
             
             # Start again if the choosen reference sequence is shorter than the lenght of the fragment to be sampled
-            if self.seq_dict[ref_seq][0] < frag_len :
+            if len(self.seq_dict[ref_seq].seq) < frag_len :
                 continue
                 
             # Define a random position in the reference sequence and sample a candidate region
             candidate_seq = self._random_candidate_sequence (ref_seq, frag_len)
             
-            # Verify the valibility of the candidate sequence in terms of repeats and ambiguity
+            # Verify the validity of the candidate sequence in terms of repeats and ambiguity
             if self._valid(candidate_seq[2], repeats, ambigous):
                 
-                # Both extremities of candidate are sampled for pair end, but for single end candidate
+                # Both extremities of candidate are sampled for pair end
                 if pair:
                     return self._extract_pair(candidate_seq, read_len, frag_len)
+                # For signle end the whole fragment is returned
                 else:
                     return candidate_seq
                     
@@ -142,7 +148,7 @@ class Sequence:
     
     
     def _random_seq (self):
-        """Pick a random sequence in seq_dict. Usage shall be different for subclasses"""
+        """Pick a random sequence in seq_dict. Usage is different for subclasses"""
         pass
                 
                 
@@ -213,7 +219,7 @@ class Sequence:
         """Extract reads forward and reverse from a candidate sequence and return a list with name,read size, frag length and both sequences"""
         forward_read = candidate_seq[2][0:read_len]
         reverse_read = self._rc(candidate_seq[2][-read_len:])
-        return [candidate_seq[0],[read_len, frag_len], [forward_read, reverse_read]]
+        return [candidate_seq[0], read_len, frag_len, forward_read, reverse_read]
         
                 
     def _out_message (self, duplicate, ndup, nread, len_dict):
@@ -241,9 +247,19 @@ class Sequence:
         plt.show()
 
 
+
 ########################################################################################################################
+
+
+
+
 ########################################################################################################################
+
+
+
+
 ########################################################################################################################
+
 
 
 class Reference (Sequence):
@@ -292,52 +308,35 @@ class Reference (Sequence):
 ########################################################################################################################
     
     def _import_seq_dict(self, filename):
-        """Ouvre un fichier contenant des séquence au format fasta et les ajoute au dictionaire de séquence en entrée/sortie"""
-        seqDict = {}
-        header = None
+        """Import fasta files in a dictionary of biopython SeqRecord"""
 
+        try: # try to open the file
+            if filename.rpartition(".")[-1] == "gz":
+                print ("Uncompressing and extracting data")
+                handle = gzip.open(filename, "r")
+            else:
+                print ("Extracting data")
+                handle = open(filename, "r")
 
-
-### readlines()
-### convert to list
-### convert to dict
-
-
-        try: # bloc try pour gerer l'erreur d'ouverture de fichier
-            with open(filename) as fasta:
-                for line in fasta: # itère sur tt les lignes du fasta
-                    if line[0] == '>':  # si début de ligne
-                        if header != None: # si ce n'est pas la première itération
-                            seqDict [header] = sequence # remplissage du dictionnaire
-                        
-                        header = line[1:].replace('\n', '').replace('\r', '') # stockage du header
-                        sequence = '' # reinitialisation de la séquence
-                    else:
-                        sequence += line[0:].replace('\n', '').replace('\r', '') # Obtention itérative de la séquence
-                
-                seqDict [header] = sequence     # ajout de la dernière séquence trouvée
-                return seqDict
-
+            seq_dict = SeqIO.to_dict(SeqIO.parse( handle, "fasta"))
+            handle.close()
+            return seq_dict
+            
         except IOError:
-            print '\n', filename, 'is not readable. The file will be ignored\n'
-            return None
+               print ('CRITICAL ERROR. The fasta file ' + filename + ' is not readable. Exit')
+               exit
 
 
     def _calculate_proba(self):
         """Return a 2 entries list / 1 = name of the sequence / 2 = cumulative frequency of the sequence"""
-        proba_list = []
         cumulative_len = 0
-        
-        # Fill the list with name and cumulative length for each seq in seq_dict
-        for name, info in self.seq_dict.items():
-            cumulative_len += info[0]
-            proba_list.append([name, cumulative_len])
-        
-        # Convert cumulative lengths in cumulative frquencies
-        for item in proba_list:
-            item[1] =  float(item[1])/cumulative_len
-            
-        return proba_list
+
+        # Calculate the cumulative length for all seq in seq_dict
+        for record in self.seq_dict.values():
+            cumulative_len += len(record.seq)
+
+        # Calculate a cumulative frequency for all reference sequences and return the list of frequencies
+        return [[record.name, float(len(record.seq))/cumulative_len] for record in self.seq_dict.values()]
 
 
     def _random_seq (self):
@@ -350,8 +349,4 @@ class Reference (Sequence):
         for name, freq  in self.proba_list:
             if freq > rand_freq :
                 return name
-
-
-
-class Junction (Sequence):
-    pass
+                

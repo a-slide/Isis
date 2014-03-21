@@ -2,9 +2,11 @@ class ConfFileParser:
     """This can be used to parse file containing a list of variables and its associated values
     The separator beetween vaiable and value must be the same for all field and can be customized by users (by default =)
     the class store the list of variable in a dictionnary named conf_dict"""
-    
 
-# FONDAMENTAL METHODS
+
+########################################################################################################################
+#   FONDAMENTAL METHODS
+########################################################################################################################
 
     # Object constructor initialized with the path of the configuration file to parse
     # In the configuration files parameter names must start the line and be follow by the value. Both filed needs
@@ -20,14 +22,18 @@ class ConfFileParser:
 
     # Long description string used by interpreter and repr
     def __repr__ (self):
-        result = "<Instance of ConfFileParser\n"
+        result = "<Instance of ConfFileParser>\n"
         for key,value in self.conf_dict.items():
-            result .= key + "\t" + value + "\n"
-        
-        result .= ">"
+            result += key + "\t" + value + "\n"
+
+        result += ">"
         return result
 
-# GETERS
+
+########################################################################################################################
+#   GETERS
+########################################################################################################################
+
 
     # Grant acces to the complete dictionary
     def getDict (self):
@@ -37,7 +43,11 @@ class ConfFileParser:
     def getVar (self, varkey ):
         return self.conf_dict[varkey]
 
-# PRIVATE SUPPORT METHODS
+
+########################################################################################################################
+#   PRIVATE METHODS
+########################################################################################################################
+
 
     # Return a dictionnary containing all parameters assosiated with its value
     def _makeConfDict (self, filename):
