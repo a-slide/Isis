@@ -14,7 +14,7 @@ class ConfFileParser:
     # Empty lines and lines starting by # will be filtered out
 
     def __init__ (self, filename):
-        self.conf_dict = self._makeConfDict (filename)
+        self.d = self._make_conf_dict (filename)
 
     # Short description string returned by print and str
     def __str__(self):
@@ -22,10 +22,12 @@ class ConfFileParser:
 
     # Long description string used by interpreter and repr
     def __repr__ (self):
-        result = "<Instance of ConfFileParser>\n"
-        for key,value in self.conf_dict.items():
-            result += key + "\t" + value + "\n"
+        key_list = self.d.keys()
+        key_list.sort()
 
+        result = "<Instance of IsisConf>\n"
+        for key in key_list:
+            result += "{0} :\t{1}\n".format(key,self.d[key])
         result += ">"
         return result
 
@@ -34,14 +36,13 @@ class ConfFileParser:
 #   GETERS
 ########################################################################################################################
 
-
     # Grant acces to the complete dictionary
     def getDict (self):
-        return self.conf_dict
+        return self.d
 
     # Give acces to individual values in conf_dict by using its key name.
-    def getVar (self, varkey ):
-        return self.conf_dict[varkey]
+    def get (self, key ):
+        return self.d[key]
 
 
 ########################################################################################################################
@@ -50,21 +51,20 @@ class ConfFileParser:
 
 
     # Return a dictionnary containing all parameters assosiated with its value
-    def _makeConfDict (self, filename):
-        return {name : value for name, value in self._makeConfList(filename)}
+    def _make_conf_dict (self, filename):
+        return {name : value for name, value in self._make_conf_list(filename)}
 
     # Return a 2 element list for each value containing lines
-    def _makeConfList (self, filename):
-        return [line[0:2] for line in self._openFile(filename)]
+    def _make_conf_list (self, filename):
+        return [line[0:2] for line in self._open_file(filename)]
 
     # Open the file containing configurations and return the list of splitted value containing lines
-    # TODO = define a alternative method of initialisation in case of failure to read the file
-    def _openFile (self, filename):
-        try: # bloc try pour gerer l'erreur d'ouverture de fichier
+    def _open_file (self, filename):
+        try:
             with open (filename) as filename:
                 return [line.split() for line in filename if line[0] != '#' and line[0] != '\n']
 
         except IOError:
-            print '\n', filename, 'is not readable. The file will be ignored\n'
+            print ("Error : " + filename + " is not readable. Can't parse the configuration file")
             return {}
 

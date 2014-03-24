@@ -139,7 +139,7 @@ class Sequence:
                 # Both extremities of candidate are sampled for pair end
                 if pair:
                     return self._extract_pair(candidate_seq, read_len, frag_len)
-                # For signle end the whole fragment is returned
+                # For single end the whole fragment is returned
                 else:
                     return candidate_seq
                     
@@ -251,11 +251,7 @@ class Sequence:
 ########################################################################################################################
 
 
-
-
 ########################################################################################################################
-
-
 
 
 ########################################################################################################################
