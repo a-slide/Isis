@@ -1,5 +1,6 @@
 from ConfFileParser import ConfFileParser
 from pprint import pprint as pp
+from sys import maxsize
 import optparse
 
 class IsisConf:
@@ -95,7 +96,6 @@ class IsisConf:
         return result
 
 
-## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
     def __str__(self):
         """Short representation"""
         return  "<Instance of IsisConf>\n"
@@ -149,7 +149,7 @@ class IsisConf:
         while True:
             try:
                 with open (path) as filename:
-                    print (path + " is valid")
+                    print (path + " is valid\n")
                     return path
             except IOError:
                 print ("Error : " + path + " can't be read")
@@ -185,11 +185,10 @@ class IsisConf:
                 print ("Error : {0} value is not a invalid integer or is outside of boundaries (min = {1}, max = {2})".format(name, min, max))
 
 
-    # TODO Find integer limits values
     def _valid_int(self, val, min, max):
         """Predicate raising a ValueError exception if a value is not in the given range"""
-        max = 100000000000 if max == None else max
-        min = -100000000000 if min == None else min
+        max = maxsize if max == None else max
+        min = -maxsize if min == None else min
 
         if val >= min and val <= max:
             return True

@@ -16,20 +16,22 @@ class ConfFileParser:
     def __init__ (self, filename):
         self.d = self._make_conf_dict (filename)
 
-    # Short description string returned by print and str
-    def __str__(self):
-        return "<Instance of ConfFileParser\n"
 
-    # Long description string used by interpreter and repr
     def __repr__ (self):
+        """Long description string used by interpreter and repr"""
         key_list = self.d.keys()
         key_list.sort()
 
-        result = "<Instance of IsisConf>\n"
+        result = "<Instance of ConfFileParser\n"
         for key in key_list:
             result += "{0} :\t{1}\n".format(key,self.d[key])
         result += ">"
         return result
+
+
+    def __str__(self):
+        """Short representation"""
+        return  "<Instance of ConfFileParser\n"
 
 
 ########################################################################################################################
