@@ -1,5 +1,4 @@
 from ConfFileParser import ConfFileParser
-from pprint import pprint as pp
 from sys import maxsize
 import optparse
 

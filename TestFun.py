@@ -1,31 +1,20 @@
-import gzip
-from Bio import SeqIO
+from random import random
+from random import randint
+from Bio.Alphabet import IUPAC
+from Bio.Seq import Seq
+from Bio.SeqRecord import SeqRecord
+from pprint import pprint as pp
 
-def fasta_open (filename):
+def _random_seq (len_seq):
+    seq =''
+    for i in range (len_seq):
+        seq += 'ATCG'[randint(0,3)]
+    return seq
 
-    try: # Try block to manage
-        if filename.rpartition(".")[-1] == "gz":
-            print ("Uncompressing and extracting data")
-            handle = gzip.open(filename, "r")
-        else:
-            print ("Extracting data")
-            handle = open(filename, "r")
-
-        seq_dict = SeqIO.to_dict(SeqIO.parse( handle, "fasta"))
-        handle.close()
-        return seq_dict
-        
-    except IOError:
-           print (filename + 'is not readable')
-           return None
-
-def _calculate_proba(seq_dict):
-    """Return a 2 entries list / 1 = name of the sequence / 2 = cumulative frequency of the sequence"""
-    cumulative_len = 0
-
-    # Calculate the cumulative length for all seq in seq_dict
-    for record in seq_dict.values():
-        cumulative_len += len(record.seq)
-
-    # Calculate a cumulative frequency for all reference sequences and return the object
-    return [[record.name, float(len(record.seq))/cumulative_len] for record in seq_dict.values()]
+def _create_simple_dict(nseq, len_seq):
+    d = {}
+    for i in range (nseq):
+        name_seq = "Seq#"+str(i)
+        seq = Seq(_random_seq(len_seq),IUPAC.IUPACAmbiguousDNA())
+        d[name_seq] = SeqRecord(seq, id=str(i), name=name_seq )
+    pp(d)
