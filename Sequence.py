@@ -53,9 +53,8 @@ class Sequence:
 #   ACTION METHODS
 ########################################################################################################################
 
-
     # TODO PARRALELIZE READ Picking
-    def generate_read_dict (self, nread, read_len, repeats, ambiguous, duplicate, pair, min = None, max = None, mean = None, certainty = None):
+    def generate_read_dict (self, nread, read_len, repeats, ambiguous, duplicate, mut_freq, pair, min = None, max = None, mean = None, certainty = None):
         """Generate a list of sequence containg the name (with localisation in mother sequence) size and DNA sequence"""
 
         read_dict = {}
@@ -67,7 +66,7 @@ class Sequence:
 
         while i < nread:
             # Try to generate a valid read. Return a list with name, length [+frag size if pair], sequence [both if pair]
-            read = self._generate_read (read_len, repeats, ambiguous, pair, alpha, beta, min, max)
+            read = self._generate_read (read_len, repeats, ambiguous, mut_freq, pair, alpha, beta, min, max)
 
             # In case it is impossible to generate a valid read in d
             if not read:
@@ -151,7 +150,7 @@ class Sequence:
 ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
 
     # TODO create an Exception in case no read was found
-    def _generate_read (self, read_len, repeats, ambiguous, pair, alpha = None, beta = None, min = None, max = None):
+    def _generate_read (self, read_len, repeats, ambiguous, mut_freq, pair, alpha = None, beta = None, min = None, max = None):
         """Generate a candidate read or read pair of a given lenght with or without repeats and ambiguous DNA bases"""
 
         # Guard condition if not possible to find a valid pair after 10 tries
@@ -179,10 +178,10 @@ class Sequence:
 
                 # Both extremities of candidate are sampled for pair end
                 if pair:
-                    return self._extract_pair(candidate, read_len, frag_len)
+                    return self._extract_pair(candidate, read_len, frag_len, mut_freq)
                 # For single end the whole fragment is returned
                 else:
-                    return [candidate.name, frag_len, candidate]
+                    return [candidate.name, frag_len, self._mutate(candidate, mut_freq)]
 
         #print ("\nNo valid read found")
         return None
@@ -246,7 +245,15 @@ class Sequence:
         forward.description = self._pair_overlap(read_len, frag_len) + "__R1"
         reverse.description = self._pair_overlap(read_len, frag_len) + "__R2"
 
-        return [candidate.name, frag_len, forward, reverse]
+        return [candidate.name, frag_len, self._mutate(forward, mut_freq), self._mutate(reverse, mut_freq)]
+
+    def _mutate(self, candidate, mut_freq):
+        if mut_freq == 0:
+             candidate.description = self._pair_overlap(read_len, frag_len) + "__R1"
+
+
+
+
 
 ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
 

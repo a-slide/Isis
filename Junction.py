@@ -9,7 +9,10 @@ class Reference (Sequence):
 
     def __init__(self, filename):
         """Object constructor importing reference sequences from fasta file"""
-        # Dictionnary of sequences storing name, size and sequence string
+
+        # Dictionnary of source junction created from junction source
+        self.j =
+        # Dictionnary of bioPython record created from junction source
         self.d = self._import_fasta (filename)
         # List cummulative probabilities of each sequence to be picked calculated from to their respective size.
         self.proba_list = self._calculate_proba()
@@ -18,7 +21,6 @@ class Reference (Sequence):
     # TODO Write this documentation
     def __doc__ (self):
         pass
-
 
 ########################################################################################################################
 #   GETERS

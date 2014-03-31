@@ -2,10 +2,12 @@
 read_num	100000
 # Read length
 read_len	150
+# Frequency of mutations in final reads
+mut_freq	0.01
 
 ### Relative frequencies of DNA source in fastq (sum of frequencies should be equal to 1)
 # Host genome frequency
-freq_hg	0.45
+freq_hg	0.4
 # Virus genome frequency
 freq_vg	0.45
 # True junctions frequency

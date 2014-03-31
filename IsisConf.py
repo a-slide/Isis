@@ -28,15 +28,25 @@ class IsisConf:
         # Read length in pb
         self.d["read_len"] = self._import_integer("read_len",1,None,150)
 
-        freq_hg, freq_vg, freq_tj, freq_fj =  self._import_freq(0.45, 0.45, 0.09, 0.01)
+        # Mutation frequency in fastq files
+        self.d["mut_freq"] = self._import_freq("mut_freq")
+
+        # host genome frequency + Virus genome frequency + True junctions frequency + # False junctions frequency
+        self.d["freq_hg"] = self._import_freq("freq_hg")
+        self.d["freq_vg"] = self._import_freq("freq_vg")
+        self.d["freq_tj"] = self._import_freq("freq_tj")
+        self.d["freq_fj"] = self._import_freq("freq_fj")
+
+        self._verify_freq_sum(["freq_hg", "freq_vg", "freq_tj", "freq_fj"])
+
         # host genome frequency
-        self.d["nread_hg"] = int (freq_hg * self.d["read_num"])
+        self.d["nread_hg"] = int (self.d["freq_hg"] * self.d["read_num"])
         # Virus genome frequency
-        self.d["nread_vg"] = int (freq_vg * self.d["read_num"])
+        self.d["nread_vg"] = int (self.d["freq_vg"] * self.d["read_num"])
         # True junctions frequency
-        self.d["nread_tj"] = int (freq_tj * self.d["read_num"])
+        self.d["nread_tj"] = int (self.d["freq_tj"] * self.d["read_num"])
         # False junctions frequency
-        self.d["nread_fj"] = int (freq_fj * self.d["read_num"])
+        self.d["nread_fj"] = int (self.d["freq_fj"] * self.d["read_num"])
 
         # Mean number of sampling in true junctions and false junction
         samp_tj = self._import_integer("samp_tj",0,self.d["nread_tj"], 100) # Should be more than 10
@@ -88,7 +98,7 @@ class IsisConf:
         key_list = self.d.keys()
         key_list.sort()
 
-        result = "<Instance of IsisConf>\n"
+        result = self.__str__()
         for key in key_list:
             result += "{0} :\t{1}\n".format(key,self.d[key])
         result += ">"
@@ -97,7 +107,7 @@ class IsisConf:
 
     def __str__(self):
         """Short representation"""
-        return  "<Instance of IsisConf>\n"
+        return "<Instance of " + self.__module__ + ">\n"
 
 ########################################################################################################################
 #   GETERS
@@ -176,7 +186,7 @@ class IsisConf:
             if raw_input ("Would you like to use the default value < {0} > (Y/N)?\n".format(default)) in 'Yy':
                 return default
             try:
-                val = int(raw_input ("Please enter a new value :  "))
+                val = int(raw_input ("Please enter a new value for {0}:  ".format(name)))
                 if self._valid_int(val, min, max):
                     return val
             # if the value is still not suitable print a meassage and try again
@@ -196,54 +206,60 @@ class IsisConf:
 
 
 ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
-    def _import_freq(self,default_hg, default_vg, default_tj, default_fj):
-        """Import frequencies from conf dict and validate their values"""
+    def _import_freq(self, name):
+        """Import an frequency as a float from conf dict and validate its value"""
         try:
-            hg = float(self.conf.get("freq_hg"))
-            vg = float(self.conf.get("freq_vg"))
-            tj = float(self.conf.get("freq_tj"))
-            fj = float(self.conf.get("freq_fj"))
-            if self._valid_freq([hg, vg, tj, fj], 1):
-                return (hg, vg, tj, fj)
+            val = float(self.conf.get(name))
+            if self._valid_freq(val):
+                return val
 
         except KeyError:
-            print ("Error : Frequency values were not found in {0})".format(self.d["conf_filename"]))
-            return self._define_freq (default_hg, default_vg, default_tj, default_fj)
+            print ("Error : {0} was not found in {1})".format(name, self.d["conf_filename"]))
+            return self._define_freq (name)
         except ValueError:
-            print ("Error : Frequencies are not numeric values or the sum of frequencies is not egual to 1")
-            return self._define_freq (default_hg, default_vg, default_tj, default_fj)
+            print ("Error : {0} value is not a invalid frequency (min = 0, max = 1)".format(name))
+            return self._define_freq (name)
 
-
-    def _define_freq (self, default_hg, default_vg, default_tj, default_fj):
+    def _define_freq (self, name):
         while (True):
-            if raw_input ("Would you like to use the default values < {0}, {1}, {2}, {3} > (Y/N)?\n".format(default_hg, default_vg, default_tj, default_fj)) in 'Yy':
-                return (default_hg, default_vg, default_tj, default_fj)
             try:
-                hg = float(raw_input ("Please enter host genome frequency :  "))
-                vg = float(raw_input ("Please enter viral genome frequency :  "))
-                tj = float(raw_input ("Please enter true junction frequency :  "))
-                fj = float(raw_input ("Please enter false junction frequency :  "))
-
-                if self._valid_freq([hg, vg, tj, fj], 1):
-                    return (hg, vg, tj, fj)
+                val = float(raw_input ("Please enter a new value for {0}:  ".format(name)))
+                if self._valid_int(val):
+                    return val
             # if the value is still not suitable print a meassage and try again
             except ValueError:
-                print ("Error : Frequencies are not numeric values or the sum of frequencies is not egual to 1")
+                print ("Error : {0} value is not a invalid frequency (min = 0, max = 1)".format(name, min, max))
 
 
-    def _valid_freq (self, val_list, target_sum):
-        """Predicate raising a ValueError exception if the sum of values in val_list is not equal to target_sum"""
-        val_sum = 0
-        for val in val_list:
-           val_sum += val
-
-        if val_sum == target_sum:
+    def _valid_freq(self, val):
+        """Predicate raising a ValueError exception if a value is not in the given range"""
+        if val >= 0 and val <= 1:
             return True
         else:
             raise ValueError
 
+## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
+
+    def _verify_freq_sum(self, key_list):
+
+        sum_freq = sum([self.d[key] for key in key_list])
+        if sum_freq == 1:
+            return
+
+        # Else propose to autocorect frequencies
+        print ("The sum of frequencies is not equal to 1")
+        if raw_input ("Would you like to autocorect the sum of frequencies (Y/N)?\n") in 'Yy':
+            for key in key_list:
+                self.d[key] /= sum_freq
+            return
+
+        # If no allow user to redefine frequencies manually
+        for key in key_list:
+            self.d[key] = self._define_freq (key)
+        return
 
 ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
+
     def _import_string(self,name,allowed_entries):
         """Import a string from conf dict and validate its value"""
         try:
@@ -263,7 +279,7 @@ class IsisConf:
             if raw_input ("Would you like to use the default value < {0} > (Y/N)?\n".format(allowed_entries[0])) in 'Yy':
                 return allowed_entries[0]
             try:
-                val = raw_input ("Please enter a new value :  ")
+                val = raw_input ("Please enter a new value for {0}:  ".format(name))
                 if self._valid_string(val, allowed_entries):
                     return val
             # if the value is still not suitable print a meassage and try again
@@ -301,7 +317,7 @@ class IsisConf:
             if raw_input ("Would you like to use the default value < {0} > (Y/N)?\n".format(default)) in 'Yy':
                 return default
             try:
-                val = raw_input ("Please define manualy your own value :  ")
+                val = raw_input ("Please enter a new value for {0}:  ".format(name))
                 if self._valid_string(val,true_list+false_list): # Use the same
                     return True if val in true_list else False
             # if the value is still not suitable print a meassage and try again

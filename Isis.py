@@ -17,8 +17,10 @@ def main ():
     """main function"""
     filename = argv[0]
     conf = IsisConf()
-    for key, value in conf.getDict().items():
-        print ("{0} :\t{1}".format(key, value))
+    print(repr(conf))
+
+
+
 
     exit (0)
 

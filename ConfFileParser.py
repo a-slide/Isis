@@ -22,7 +22,7 @@ class ConfFileParser:
         key_list = self.d.keys()
         key_list.sort()
 
-        result = "<Instance of ConfFileParser\n"
+        result = self.__str__()
         for key in key_list:
             result += "{0} :\t{1}\n".format(key,self.d[key])
         result += ">"
@@ -31,7 +31,7 @@ class ConfFileParser:
 
     def __str__(self):
         """Short representation"""
-        return  "<Instance of ConfFileParser\n"
+        return "<Instance of " + self.__module__ + ">\n"
 
 
 ########################################################################################################################

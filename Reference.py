@@ -10,7 +10,7 @@ class Reference (Sequence):
 
     def __init__(self, filename):
         """Object constructor importing reference sequences from fasta file"""
-        # Dictionnary of sequences storing name, size and sequence string
+        # Dictionnary of bioPython record created from fasta file
         self.d = self._import_fasta (filename)
         # List cummulative probabilities of each sequence to be picked calculated from to their respective size.
         self.proba_list = self._calculate_proba()
