@@ -23,7 +23,7 @@ class SlicePicker:
 #   ACTION METHODS
 ########################################################################################################################
 
-    def peak_single (self, source, read_len, repeats, ambiguous, mut_freq = 0):
+    def pick_single (self, source, read_len, repeats, ambiguous, mut_freq = 0):
 
         # Guard condition if not possible to find a valid pair after 100 tries
         for count in range (100):
@@ -43,11 +43,12 @@ class SlicePicker:
 
 ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
 
-    def peak_pair (self, source, read_len, sonic_min, sonic_max, sonic_mode, sonic_certainty, repeats, ambiguous, mut_freq = 0):
+    def pick_pair (self, source, read_len, sonic_min, sonic_max, sonic_mode, sonic_certainty, repeats, ambiguous, mut_freq = 0):
         """Generate a candidate read or read pair of a given lenght with or without repeats and ambiguous DNA bases"""
 
         # Calculate the parameters of shape for the beta distribution to mimick DNA shearing distribution by sonication
         alpha, beta = self._beta_shape(sonic_min, sonic_max, sonic_mode, sonic_certainty)
+        ######################## TEST SONICATION VALUES
 
         # Guard condition if not possible to find a valid pair after 100 tries
         for count in range (100):
@@ -61,7 +62,7 @@ class SlicePicker:
                 continue
 
             # Extract pair reads from slice
-            read1, read2 = self._extract_pair (fragment, read_len)
+            read1, read2 = self._extract_pair (fragment, read_len, frag_len)
 
             # Verify the validity of the candidate sequence in terms of repeats and ambiguity
             if self._valid_sequence(str(read1.seq), repeats, ambiguous) and self._valid_sequence(str(read2.seq), repeats, ambiguous):
@@ -111,15 +112,25 @@ class SlicePicker:
         forward = fragment[:read_len]
         reverse = fragment[-read_len:].reverse_complement()
 
-        forward.annotations = reverse.annotations = {
+        forward.annotations = {
         "orientation"   : fragment.annotations["orientation"],
         "source"        : fragment.annotations["source"],
         "refseq"        : fragment.annotations["refseq" ],
         "location"      : fragment.annotations["location"],
-        "pair_overlap"  : self._pair_overlap(read_len, frag_len)}
-
-        forward.annotations ["read"] = "R1"
-        reverse.annotations ["read"] = "R2"
+        "frag_length"   : frag_len,
+        "pair_overlap"  : self._pair_overlap(read_len, frag_len),
+        "read"          : "R1"}
+        
+        reverse.annotations = {
+        "orientation"   : fragment.annotations["orientation"],
+        "source"        : fragment.annotations["source"],
+        "refseq"        : fragment.annotations["refseq" ],
+        "location"      : fragment.annotations["location"],
+        "frag_length"   : frag_len,
+        "pair_overlap"  : self._pair_overlap(read_len, frag_len),
+        "read"          : "R2"}
+        
+        forward.id = forward.name = forward.description = reverse.id = reverse.name = reverse.description=  ""
 
         return (forward, reverse)
 
@@ -132,9 +143,12 @@ class SlicePicker:
 
     def _mutate_sequence(self, read, mut_freq):
         """Introduce mutations in a biopython record"""
+        
+        read.annotations ["Mutations"] = []
+        
         if mut_freq != 0:
-
-            read.annotations ["Mutations"] = []
+            
+            # Change seqreccord to mutable object
             seq = read.seq.tomutable()
 
             for i in range(len(seq)):
@@ -142,8 +156,13 @@ class SlicePicker:
                     original_base = seq[i]
                     seq[i] = self._mutate_base(seq[i])
                     read.annotations ["Mutations"].append ("Pos {} {} -> {}".format(i+1, original_base, seq[i]))
-
+            
+            # Change back to non-mutable object
             read.seq = seq.toseq()
+        
+        # if no mutation was introduced
+        if not read.annotations ["Mutations"]:
+            read.annotations ["Mutations"] = "No mutation"
 
         return read
 
