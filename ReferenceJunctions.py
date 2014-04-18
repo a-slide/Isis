@@ -14,6 +14,8 @@ class ReferenceJunctions:
         self.source = source
         self.min_chimeric = min_chimeric
         self.d = self._create_junctions_dict (size, njunctions, ref1, ref2, repeats, ambiguous)
+        
+## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
 
     def __repr__(self):
         """Long description string used by interpreter and repr"""
@@ -21,6 +23,8 @@ class ReferenceJunctions:
         for entry in self.d.values():
             result += "<{0}\nLenght:{1}>\n\n".format(entry, len(entry))
         return result
+
+## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
 
     def __str__(self):
         """Short representation"""
@@ -34,9 +38,13 @@ class ReferenceJunctions:
     def getSource (self):
         return self.source
 
+## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
+
     # Give acces to individual values in d by using its key name.
     def get (self, varkey ):
         return self.d[varkey]
+
+## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
 
     # Give acces to the complete dictionary
     def getDict (self):
@@ -94,6 +102,7 @@ class ReferenceJunctions:
 
         return junctions_dict
 
+## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
 
     def _random_slice (self, refseq, size, lenjun):
         """Return a slice overlapping a junction from a biopython Seqrecord in d"""
@@ -101,8 +110,8 @@ class ReferenceJunctions:
         # Example of the strategy with size = 20 and min chimeric = 6
         # Junction      -----------------------------|-----------------------------
         # Chimeric bases                       /////////////
-        # Start area    //////////////ooooooooo////////////////////////////////////
-        # End area      ////////////////////////////////////ooooooooo//////////////
+        # Start area    ///////////////ooooooo////////////////////////////////////
+        # End area      ////////////////////////////////////ooooooo////////////////
 
         # Randomly choose the slice start position in the autorized area
         start = randint((lenjun/2 + self.min_chimeric - size), (lenjun/2 - self.min_chimeric))

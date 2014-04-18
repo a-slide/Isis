@@ -5,7 +5,7 @@ from random import sample
 from random import betavariate
 
 class SlicePicker:
-    """"""
+    """Accessory class asking sequence slice to source (ReferenceGenome and referenceJunction)"""
 
 ########################################################################################################################
 #   FONDAMENTAL METHODS
@@ -24,7 +24,9 @@ class SlicePicker:
 ########################################################################################################################
 
     def pick_single (self, source, read_len, repeats, ambiguous, mut_freq = 0):
-
+        """Generate a candidate read. The presence or absence of repeats and ambiguous DNA bases can be checked
+        and a given frequency of bases can be randomly mutated"""
+    
         # Guard condition if not possible to find a valid pair after 100 tries
         for count in range (100):
 
@@ -44,10 +46,15 @@ class SlicePicker:
 ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
 
     def pick_pair (self, source, read_len, sonic_min, sonic_max, sonic_mode, sonic_certainty, repeats, ambiguous, mut_freq = 0):
-        """Generate a candidate read or read pair of a given lenght with or without repeats and ambiguous DNA bases"""
-
+        """Generate a candidate read pair from a fragment of a length following a distribution mimicking sonication smire
+         The presence or absence of repeats and ambiguous DNA bases can be checked and a given frequency of bases can 
+         be randomly mutated"""
+        
+        if not sonic_min <= sonic_mode <= sonic_max:
+            raise Exception ("Wrong sonication parameters")
+        
         # Calculate the parameters of shape for the beta distribution to mimick DNA shearing distribution by sonication
-        alpha, beta = self._beta_shape(sonic_min, sonic_max, sonic_mode, sonic_certainty)
+        alpha, beta = self._beta_shape(sonic_min, sonic_max, , sonic_certainty)
         ######################## TEST SONICATION VALUES
 
         # Guard condition if not possible to find a valid pair after 100 tries
