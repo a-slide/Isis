@@ -1,21 +1,36 @@
-from random import random
-from random import randint
+# Standard library packages
+from random import random, randint
 import gzip
-from Bio import SeqIO
+
+# Third party packages
+from Bio import SeqIO # Require Biopython
+
 
 class ReferenceGenome:
-
-########################################################################################################################
+    """Import reference sequences from a fasta files and store each of
+    them in a dictionary. The class provide a method get a random
+    biopython seqrecord slice from one of the reference sequences,
+    proportionally to the size of all reference sequences.
+    """
+####################################################################################################
 #   FONDAMENTAL METHODS
-########################################################################################################################
+####################################################################################################
 
     def __init__(self, source, filename):
-        """Object constructor importing reference sequences from fasta file"""
-        # Dictionnary of bioPython record created from fasta file
+        """Import reference sequences from fasta file and create a list
+        of probability to sample in each ref sequence
+        """
+        # Store the source name in a global variable
         self.source = source
-        self.d = self._import_fasta (filename)
-        # List cummulative probabilities of each sequence to be picked calculated from to their respective size.
+        
+        # Dictionnary of bioPython record created from fasta file
+        self.d = self._import_fasta(filename)
+        
+        # List cummulative probabilities of each sequence to be picked
+        # calculated from to their respective size.
         self.proba_list = self._calculate_proba()
+
+## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
 
     def __repr__(self):
         """Long description string used by interpreter and repr"""
@@ -29,91 +44,94 @@ class ReferenceGenome:
         return "<Instance of " + self.__module__ + ">\n"
 
     # TODO Write this documentation
-    def __doc__ (self):
+    def __doc__(self):
         pass
 
 
-########################################################################################################################
+####################################################################################################
 #   GETERS
-########################################################################################################################
+####################################################################################################
 
     # Give acces to the name of the source
-    def getSource (self):
+    def getSource(self):
         return self.source
 
     # Give acces to individual values in d by using its key name.
-    def get (self, varkey ):
+    def get(self, varkey):
         return self.d[varkey]
 
     # Give acces to the complete dictionary
-    def getDict (self):
+    def getDict(self):
         return self.d
 
     # Acces to the cumulative frequency list
-    def getProba (self):
+    def getProba(self):
         return self.proba_list
 
-########################################################################################################################
+####################################################################################################
 #   PUBLIC METHODS
-########################################################################################################################
+####################################################################################################
 
-    def get_slice (self, size):
+    def get_slice(self, size):
         """Generate a candidate slice and return it"""
 
-        # Guard condition if not possible to find a valid slice after 100 tries
-        for count in range (100):
+        # Guard condition to try to sample a valid slice 100 times
+        for count in range(100):
             # Pick a random sequence in dictionnary
             refseq = self._random_refseq()
 
-            # Start again if the choosen reference sequence is shorter than the lenght of the fragment to be sampled
+            # Start again if the choosen reference sequence is shorter
+            # than the lenght of the fragment to be sampled
             if len(self.d[refseq]) >= size :
-                return self._random_slice (refseq, size)
+                return self._random_slice(refseq, size)
 
         # if no valid size was found
-        raise Exception ("The size of the slice seems to be too long to be sampled in reference sequences")
+        raise Exception("The size of the slice is too long to be sampled in reference sequences")
 
-########################################################################################################################
+####################################################################################################
 #   PRIVATE METHODS
-########################################################################################################################
+####################################################################################################
 
-    def _import_fasta (self, filename):
+    def _import_fasta(self, filename):
         """Import fasta files in a dictionary of biopython SeqRecord"""
 
-        try: # try to open the file
+        # Try to open the file fist gz compressed and uncompressed
+        try: 
             if filename.rpartition(".")[-1] == "gz":
-                print ("Uncompressing and extracting data")
+                print("Uncompressing and extracting data")
                 handle = gzip.open(filename, "r")
             else:
-                print ("Extracting data")
+                print("Extracting data")
                 handle = open(filename, "r")
 
-            d = SeqIO.to_dict(SeqIO.parse( handle, "fasta"))
+            d = SeqIO.to_dict(SeqIO.parse(handle, "fasta"))
             handle.close()
-
             return d
-
+            
+        # Try to open the file fist gz compressed and uncompressed
         except IOError:
-               print ('CRITICAL ERROR. The fasta file ' + filename + ' is not readable. Exit')
+               print('CRITICAL ERROR. The fasta file ' + filename + ' is not readable. Exit')
                exit
 
-## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
+## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
 
     def _calculate_proba(self):
-        """Return a 2 entries list / 1 = name of the sequence / 2 = cumulative frequency of the sequence"""
+        """Return a 2 entries list with the name of the sequence and a
+        cumulative frequency of the sequence"""
 
-        l = []
+        proba_list = []
         cumulative_len = 0.0
         total_len = sum([len(record) for record in self.d.values()])
 
         for record in self.d.values():
             cumulative_len += len(record)
-            l.append([record.name, cumulative_len/total_len])
+            proba_list.append([record.name, cumulative_len/total_len])
 
-        return l
+        return proba_list
 
-## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
+## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
 
-    def _random_refseq (self):
+    def _random_refseq(self):
         """Return a random sequence from d according the respective size of references"""
 
         # Define a pseudo-random decimal frequency
@@ -124,7 +142,7 @@ class ReferenceGenome:
             if freq > rand_freq :
                 return name
 
-## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
+## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
 
     def _random_slice(self, refseq, size):
         """Return a slice from a biopython Seqrecord in d"""
@@ -140,13 +158,9 @@ class ReferenceGenome:
 
         slice.id = slice.name = slice.description = ""
         slice.annotations = {
-        "orientation"   : "+" if forward else "-",
-        "source"        : self.source,
-        "refseq"        : refseq,
-        "location"      : [start, end]}
-
+            "orientation" : "Forward" if forward else "Reverse",
+            "source" : self.source,
+            "refseq" : refseq,
+            "location" : [start, end]}
+        
         return slice
-
-
-
-

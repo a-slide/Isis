@@ -1,66 +1,214 @@
+# Standard library packages
+from random import random, sample, betavariate
+
+# Third party packages
 from Bio.Alphabet.IUPAC import IUPACAmbiguousDNA as Ambiguous
 from Bio.Alphabet.IUPAC import IUPACUnambiguousDNA as Unambiguous
-from random import random
-from random import sample
-from random import betavariate
+
+####################################################################################################
+####################################################################################################
 
 class SlicePicker:
-    """Accessory class asking sequence slice to source (ReferenceGenome and referenceJunction)"""
+    """Accessory class asking sequence slice to source (ReferenceGenome
+    and referenceJunction)
+    """
 
-########################################################################################################################
+########################################################################
 #   FONDAMENTAL METHODS
-########################################################################################################################
+########################################################################
+    
+    def __init__(self, repeats, ambiguous, mut_freq):
+        """Initialize the class with generic variables
+        """
+        # Definition of a generic mutation frequency
+        self.mut_freq = mut_freq
+        # Definition of a generic alphabet of allowed DNA bases
+        self.alphabet = self._IUPAC(repeats, ambiguous)
 
     def __repr__(self):
         """Long representation"""
-        return self.__str__()
+        return "{}\n Alphabet : {}\n Mutation frequency : {}\n". format(
+            self.__str__(),
+            self.alphabet,
+            self.mut_freq)
 
     def __str__(self):
         """Short representation"""
         return "<Instance of " + self.__module__ + ">\n"
 
-########################################################################################################################
-#   ACTION METHODS
-########################################################################################################################
+########################################################################
+#   PRIVATE METHODS
+########################################################################
 
-    def pick_single (self, source, read_len, repeats, ambiguous, mut_freq = 0):
-        """Generate a candidate read. The presence or absence of repeats and ambiguous DNA bases can be checked
-        and a given frequency of bases can be randomly mutated"""
+    def _IUPAC(self, repeats, ambiguous):
+        """Return the IUPAC DNA alphabet corresponding to users requirements"""
+        return self._repeats (Ambiguous.letters, repeats) if ambiguous else self._repeats (Unambiguous.letters, repeats)
+
+## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
+
+    def _repeats(self, alphabet, repeats):
+        return alphabet + alphabet.lower() if repeats else alphabet
+
+## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
+
+    def _valid_sequence (self, seq):
+        """Define if the candidate region is valid according to user specifications (allow repeats, allow ambiguous)"""
+        return all ([(base in self.alphabet) for base in seq])
+
+## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
+
+    def _mutate_sequence(self, read, mut_freq):
+        """Introduce mutations in a biopython record"""
+        
+        read.annotations ["Mutations"] = []
+        
+        if mut_freq != 0:
+            
+            # Change seqreccord to mutable object
+            seq = read.seq.tomutable()
+
+            for i in range(len(seq)):
+                if random() < mut_freq:
+                    original_base = seq[i]
+                    seq[i] = self._mutate_base(seq[i])
+                    read.annotations ["Mutations"].append ("Pos {} {} -> {}".format(i+1, original_base, seq[i]))
+            
+            # Change back to non-mutable object
+            read.seq = seq.toseq()
+        
+        # if no mutation was introduced
+        if not read.annotations ["Mutations"]:
+            read.annotations ["Mutations"] = "No mutation"
+
+        return read
+
+## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
+
+    def _mutate_base(self, base):
+        """return a DNA base different from the given base"""
+        return sample([mut_base for mut_base in Unambiguous.letters if mut_base not in base.upper()], 1)[0]
+
+####################################################################################################
+####################################################################################################
+
+class SlicePickerSingle(SlicePicker):
+    """For single read sampling"""
     
+########################################################################
+#   FONDAMENTAL METHODS
+########################################################################
+
+    def __init__(self, read_len, repeats, ambiguous, mut_freq):
+        """Initialize the class with super class init method and the 
+        read len.  
+        """
+        # Use the super class init method
+        super(self).__init__(repeats, ambiguous, mut_freq)
+        
+        # Store read length
+        self.read_len = read_len
+
+## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
+
+    def __repr__(self):
+        """Long representation
+        """
+        return "{} Read Lenght\n". format(super.__repr__(), self.read_len)
+
+## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
+
+    def __str__(self):
+        """Short representation
+        """
+        return "<Instance of " + self.__module__ + ">\n"
+
+########################################################################
+#   ACTION METHODS
+########################################################################
+
+    def pick_single (self, source):
+        """Generate a candidate read. The presence or absence of repeats 
+        and ambiguous DNA bases can be checked and a given frequency of 
+        bases can be randomly mutated
+        """
         # Guard condition if not possible to find a valid pair after 100 tries
         for count in range (100):
 
             # Ask a random sequence to the source
             try:
-                read = source.get_slice(read_len)
+                read = source.get_slice(self.read_len)
             except Exception:
                 continue
 
             # Verify the validity of the candidate sequence in terms of repeats and ambiguity
-            if self._valid_sequence(str(read.seq), repeats, ambiguous):
-                return self._mutate_sequence(read, mut_freq)
+            if self._valid_sequence(str(read.seq)):
+                return self._mutate_sequence(read)
 
         # If not candidate sequence if found after all tries a generic Exception is raised
         raise Exception ("No valid slice was found")
 
-## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
 
-    def pick_pair (self, source, read_len, sonic_min, sonic_max, sonic_mode, sonic_certainty, repeats, ambiguous, mut_freq = 0):
-        """Generate a candidate read pair from a fragment of a length following a distribution mimicking sonication smire
-         The presence or absence of repeats and ambiguous DNA bases can be checked and a given frequency of bases can 
-         be randomly mutated"""
+####################################################################################################
+####################################################################################################
+
+
+class SlicePickerPair(SlicePicker):
+    """For paired read sampling"""
+    
+########################################################################
+#   FONDAMENTAL METHODS
+########################################################################
+
+    def __init__(self, read_len, sonic_min, sonic_max, sonic_mode, sonic_certainty, repeats,
+                 ambiguous, mut_freq):
+        """Initialize the class with super class init method, the 
+        read len and sonication parameters
+        """
+        # Use the super class init method
+        super().__init__(repeats,  ambiguous, mut_freq)
         
         if not sonic_min <= sonic_mode <= sonic_max:
             raise Exception ("Wrong sonication parameters")
         
-        # Calculate the parameters of shape for the beta distribution to mimick DNA shearing distribution by sonication
-        alpha, beta = self._beta_shape(sonic_min, sonic_max, , sonic_certainty)
-        ######################## TEST SONICATION VALUES
+        # Store read length and sonication parameters
+        self.read_len = read_len
+        self.sonic_min = sonic_min
+        self.sonic_max = sonic_max
+        self.sonic_mode = sonic_mode
+        self.sonic_certainty = sonic_certainty
+        self.alpha, self.beta = self._beta_shape()
+        
+## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
+
+    def __repr__(self):
+        """Long representation
+        """
+        return "{} Read Lenght {}\n Sonication minimum {}\n Sonication mode {}\n\
+                Sonication max {}\n Sonication certainty {}\n alpha {}\n beta {}\n\}". format(
+                super.__repr__(), self.read_len, self.sonic_min, self.sonic_max, self.sonic_mode,
+                self.sonic_certainty, self.alpha, self.beta)
+
+## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
+
+    def __str__(self):
+        """Short representation
+        """
+        return "<Instance of " + self.__module__ + ">\n"
+
+########################################################################
+#   ACTION METHODS
+########################################################################
+
+    def pick_pair (self, source, read_len, sonic_min, sonic_max, sonic_mode, sonic_certainty, repeats, ambiguous, mut_freq = 0):
+        """Generate a candidate read pair from a fragment of a length following a distribution mimicking sonication smire
+         The presence or absence of repeats and ambiguous DNA bases can be checked and a given frequency of bases can 
+         be randomly mutated
+         """
 
         # Guard condition if not possible to find a valid pair after 100 tries
         for count in range (100):
             # Generate a random size following a beta distribution (mimick sonication smire)
-            frag_len = self._beta_distrib(alpha, beta, sonic_min, sonic_max)
+            frag_len = self._beta_distrib()
 
             # Ask a random sequence to the source
             try:
@@ -69,49 +217,33 @@ class SlicePicker:
                 continue
 
             # Extract pair reads from slice
-            read1, read2 = self._extract_pair (fragment, read_len, frag_len)
+            read1, read2 = self._extract_pair (fragment, self.read_len, frag_len)
 
             # Verify the validity of the candidate sequence in terms of repeats and ambiguity
-            if self._valid_sequence(str(read1.seq), repeats, ambiguous) and self._valid_sequence(str(read2.seq), repeats, ambiguous):
-                return (self._mutate_sequence(read1, mut_freq), self._mutate_sequence(read2, mut_freq))
+            if self._valid_sequence(str(read1.seq)) and self._valid_sequence(str(read2.seq)):
+                return (self._mutate_sequence(read1), self._mutate_sequence(read2))
 
         # If not candidate sequence if found after all tries a generic Exception is raised
         raise Exception ("No valid slice was found")
 
-########################################################################################################################
+########################################################################
 #   PRIVATE METHODS
-########################################################################################################################
+########################################################################
 
-    def _valid_sequence (self, seq, repeats, ambiguous):
-        """Define if the candidate region is valid according to user specifications (allow repeats, allow ambiguous)"""
-        valid_base = self._IUPAC(repeats, ambiguous)
-        return all ([(base in valid_base) for base in seq])
-
-## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
-
-    def _IUPAC(self, repeats, ambiguous):
-        """Return the IUPAC DNA alphabet corresponding to users requirements"""
-        return self._repeats (Ambiguous.letters, repeats) if ambiguous else self._repeats (Unambiguous.letters, repeats)
-
-    def _repeats(self, alphabet, repeats):
-        return alphabet + alphabet.lower() if repeats else alphabet
-
-## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
-
-    def _beta_shape(self, min, max, mode, certainty):
+    def _beta_shape(self):
         """Calculate shape parameters alpha and beta to fit experimental indication from user"""
-
-        alpha = float((mode - min)) / (max - min) * (certainty-2) + 1
-        beta = certainty - alpha
+        
+        alpha = float(self.sonic_mode-self.sonic_min) / (self.sonic_max-self.sonic_min) * (self.sonic_certainty-2) + 1
+        beta = self.sonic_certainty - alpha
         return (alpha, beta)
 
-## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
+## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
 
-    def _beta_distrib(self, alpha, beta, min, max):
+    def _beta_distrib(self):
         """Define a pseudorandom size according to a beta distribution giving alpha and beta"""
-        return int (betavariate(alpha, beta) * (max - min) + min)
+        return int (betavariate(self.alpha, self.beta) * (self.sonic_max - self.sonic_min) + self.sonic_min)
 
-## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
+## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
 
     def _extract_pair(self, fragment, read_len, frag_len):
         """Extract reads forward and reverse from a fragment sequence and return a list with name, and both records"""
@@ -141,41 +273,7 @@ class SlicePicker:
 
         return (forward, reverse)
 
-## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
+## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
 
     def _pair_overlap(self,read_len, frag_len):
         return "No_overlap" if frag_len > 2*read_len else "{0}_bp_overlap".format(2*read_len-frag_len)
-
-## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
-
-    def _mutate_sequence(self, read, mut_freq):
-        """Introduce mutations in a biopython record"""
-        
-        read.annotations ["Mutations"] = []
-        
-        if mut_freq != 0:
-            
-            # Change seqreccord to mutable object
-            seq = read.seq.tomutable()
-
-            for i in range(len(seq)):
-                if random() < mut_freq:
-                    original_base = seq[i]
-                    seq[i] = self._mutate_base(seq[i])
-                    read.annotations ["Mutations"].append ("Pos {} {} -> {}".format(i+1, original_base, seq[i]))
-            
-            # Change back to non-mutable object
-            read.seq = seq.toseq()
-        
-        # if no mutation was introduced
-        if not read.annotations ["Mutations"]:
-            read.annotations ["Mutations"] = "No mutation"
-
-        return read
-
-## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
-    def _mutate_base(self, base):
-        """return a DNA base different from the given base"""
-        return sample([mut_base for mut_base in Unambiguous.letters if mut_base not in base.upper()], 1)[0]
-
-## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##

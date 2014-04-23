@@ -1,4 +1,6 @@
-from random import randint, gauss
+# Standard library packages
+from random import gauss
+
 
 class QualGenerator:
     """Accessory class generating quality strings following a given

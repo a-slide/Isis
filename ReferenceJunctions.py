@@ -1,6 +1,9 @@
+# Standard library packages
+from random import sample, randint
+
+# Local packages
 from SlicePicker import SlicePicker
-from random import sample
-from random import randint
+
 
 class ReferenceJunctions:
     """"""
@@ -125,7 +128,7 @@ class ReferenceJunctions:
         # Adding informations to the biopython record
         slice.id = slice.name = slice.description = ""
         slice.annotations = {
-        "orientation"   : "+" if forward else "-",
+        "orientation"   : "Forward" if forward else "Reverse",
         "source"        : self.source,
         "refseq"        : refseq,
         "location"      : [start, end]}

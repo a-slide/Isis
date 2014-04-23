@@ -1,18 +1,35 @@
-from ../QualGenerator import QualGenerator
-from matplotlib import pyplot
 
-def qtester(length, quality, iteration, title):
+from Bio import SeqIO
 
-    q = QualGenerator(length, quality)
-    fig = pyplot.figure(figsize=(length/2, 10), dpi=100)
-    pyplot.title(title)
-    pyplot.ylabel('PHRED Quality')
-    pyplot.xlabel('Position')
-    position = [i+1 for i in range (length)]
+from ReferenceGenome import ReferenceGenome
+from SlicePicker import SlicePicker
+from QualGenerator import QualGenerator
+
+def FastqGenerator (source, file, quality, length, mutfreq):
+
+    g = ReferenceGenome (source, file)
+    print(repr(g))
     
-    for i in range (iteration):
-        q_list = q.random_qual_string()
-        pyplot.plot(position, q_list)
+    s = SlicePicker ()
+    print(repr(s))
+    
+    q = QualGenerator (length, quality)
+    print(repr(q))
 
-    fig.savefig(title+'.png')
+    read = s.pick_single(g,length,1,1,mutfreq)
+    read.letter_annotations["phred_quality"] = q.random_qual_string()
+    read.id = "{}|{}|loc_{}_{}_{}".format(
+        read.annotations["source"],
+        read.annotations["refseq"],
+        read.annotations["location"][0],
+        read.annotations["location"][1],
+        read.annotations["orientation"])
+    
+    print(read)
+    print(read.format("qual"))
+    print(read.format("fastq-illumina"))
 
+    return read
+    
+
+    
