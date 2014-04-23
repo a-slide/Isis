@@ -1,12 +1,18 @@
-from ReferenceJunctions import ReferenceJunctions
-from ReferenceGenome import ReferenceGenome
-from SlicePicker import SlicePicker
-from pprint import pprint as pp
+from ../QualGenerator import QualGenerator
+from matplotlib import pyplot
 
-r1 = ReferenceGenome("Mouse","datasets/small_multi.fa")
-r2 = ReferenceGenome("AAV","datasets/Bacterial_backbone.fa")
-tj = ReferenceJunctions ("True_junctions", 10, 40, 20, r1, r2, True, False)
-fj = ReferenceJunctions ("False_junctions", 10, 40, 20, r1, r2, True, False)
-s = SlicePicker()
+def qtester(length, quality, iteration, title):
 
-liste =[]
+    q = QualGenerator(length, quality)
+    fig = pyplot.figure(figsize=(length/2, 10), dpi=100)
+    pyplot.title(title)
+    pyplot.ylabel('PHRED Quality')
+    pyplot.xlabel('Position')
+    position = [i+1 for i in range (length)]
+    
+    for i in range (iteration):
+        q_list = q.random_qual_string()
+        pyplot.plot(position, q_list)
+
+    fig.savefig(title+'.png')
+
