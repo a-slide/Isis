@@ -2,34 +2,34 @@
 from Bio import SeqIO
 
 from ReferenceGenome import ReferenceGenome
-from SlicePicker import SlicePicker
+from SlicePicker import SlicePickerPair
 from QualGenerator import QualGenerator
 
-def FastqGenerator (source, file, quality, length, mutfreq):
+def FastqGenerator (source, file, quality, read_len, sonic_min, sonic_max, sonic_mode, sonic_certainty, repeats, ambiguous, mut_freq):
 
     g = ReferenceGenome (source, file)
     print(repr(g))
     
-    s = SlicePicker ()
+    s = SlicePickerPair(read_len, sonic_min, sonic_max, sonic_mode, sonic_certainty, repeats, ambiguous, mut_freq)
     print(repr(s))
     
-    q = QualGenerator (length, quality)
+    q = QualGenerator (read_len, quality)
     print(repr(q))
 
-    read = s.pick_single(g,length,1,1,mutfreq)
-    read.letter_annotations["phred_quality"] = q.random_qual_string()
-    read.id = "{}|{}|loc_{}_{}_{}".format(
-        read.annotations["source"],
-        read.annotations["refseq"],
-        read.annotations["location"][0],
-        read.annotations["location"][1],
-        read.annotations["orientation"])
+    read1, read2 = s.pick_slice(g)
+    read1.letter_annotations["phred_quality"] = q.random_qual_string()
+    read2.letter_annotations["phred_quality"] = q.random_qual_string()
     
-    print(read)
-    print(read.format("qual"))
-    print(read.format("fastq-illumina"))
+    read1.id = "R1"
+    read2.id = "R2"
 
-    return read
+    print(read1)
+    print(read2)
+    
+    print(read1.format("fastq-illumina"))
+    print(read2.format("fastq-illumina"))
+    
+    return (read1, read2)
     
 
     

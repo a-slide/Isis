@@ -8,9 +8,8 @@ from Bio.Alphabet.IUPAC import IUPACUnambiguousDNA as Unambiguous
 ####################################################################################################
 ####################################################################################################
 
-class SlicePicker:
-    """Accessory class asking sequence slice to source (ReferenceGenome
-    and referenceJunction)
+class SlicePicker(object):
+    """Base class for SlicePickerSingle and SlicePickerPair 
     """
 
 ########################################################################
@@ -23,7 +22,7 @@ class SlicePicker:
         # Definition of a generic mutation frequency
         self.mut_freq = mut_freq
         # Definition of a generic alphabet of allowed DNA bases
-        self.alphabet = self._IUPAC(repeats, ambiguous)
+        self.alphabet = self._IUPAC_alphabet(repeats, ambiguous)
 
     def __repr__(self):
         """Long representation"""
@@ -40,35 +39,35 @@ class SlicePicker:
 #   PRIVATE METHODS
 ########################################################################
 
-    def _IUPAC(self, repeats, ambiguous):
-        """Return the IUPAC DNA alphabet corresponding to users requirements"""
-        return self._repeats (Ambiguous.letters, repeats) if ambiguous else self._repeats (Unambiguous.letters, repeats)
-
-## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
-
-    def _repeats(self, alphabet, repeats):
-        return alphabet + alphabet.lower() if repeats else alphabet
+    def _IUPAC_alphabet(self, repeats, ambiguous):
+        """ Define an DNA letters alphabet according to the user 
+        specifications (allow repeats, allow ambiguous)
+        """
+        alphabet = Ambiguous.letters if ambiguous else Unambiguous.letters
+        alphabet = alphabet + alphabet.lower() if repeats else alphabet
+        return alphabet
 
 ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
 
     def _valid_sequence (self, seq):
-        """Define if the candidate region is valid according to user specifications (allow repeats, allow ambiguous)"""
+        """ Verify if the users sequence 
+        """
         return all ([(base in self.alphabet) for base in seq])
 
 ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
 
-    def _mutate_sequence(self, read, mut_freq):
+    def _mutate_sequence(self, read):
         """Introduce mutations in a biopython record"""
         
         read.annotations ["Mutations"] = []
         
-        if mut_freq != 0:
+        if self.mut_freq != 0:
             
             # Change seqreccord to mutable object
             seq = read.seq.tomutable()
 
             for i in range(len(seq)):
-                if random() < mut_freq:
+                if random() < self.mut_freq:
                     original_base = seq[i]
                     seq[i] = self._mutate_base(seq[i])
                     read.annotations ["Mutations"].append ("Pos {} {} -> {}".format(i+1, original_base, seq[i]))
@@ -86,7 +85,7 @@ class SlicePicker:
 
     def _mutate_base(self, base):
         """return a DNA base different from the given base"""
-        return sample([mut_base for mut_base in Unambiguous.letters if mut_base not in base.upper()], 1)[0]
+        return sample([mut_base for mut_base in Unambiguous.letters if mut_base not in base.upper()],1)[0]
 
 ####################################################################################################
 ####################################################################################################
@@ -103,7 +102,7 @@ class SlicePickerSingle(SlicePicker):
         read len.  
         """
         # Use the super class init method
-        super(self).__init__(repeats, ambiguous, mut_freq)
+        super(self.__class__, self).__init__(repeats, ambiguous, mut_freq)
         
         # Store read length
         self.read_len = read_len
@@ -113,7 +112,9 @@ class SlicePickerSingle(SlicePicker):
     def __repr__(self):
         """Long representation
         """
-        return "{} Read Lenght\n". format(super.__repr__(), self.read_len)
+        return "{} Read Lenght {}\n". format(
+            super(self.__class__, self).__repr__(),
+            self.read_len)
 
 ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
 
@@ -126,7 +127,7 @@ class SlicePickerSingle(SlicePicker):
 #   ACTION METHODS
 ########################################################################
 
-    def pick_single (self, source):
+    def pick_slice (self, source):
         """Generate a candidate read. The presence or absence of repeats 
         and ambiguous DNA bases can be checked and a given frequency of 
         bases can be randomly mutated
@@ -165,7 +166,7 @@ class SlicePickerPair(SlicePicker):
         read len and sonication parameters
         """
         # Use the super class init method
-        super().__init__(repeats,  ambiguous, mut_freq)
+        super(self.__class__, self).__init__(repeats,  ambiguous, mut_freq)
         
         if not sonic_min <= sonic_mode <= sonic_max:
             raise Exception ("Wrong sonication parameters")
@@ -183,10 +184,9 @@ class SlicePickerPair(SlicePicker):
     def __repr__(self):
         """Long representation
         """
-        return "{} Read Lenght {}\n Sonication minimum {}\n Sonication mode {}\n\
-                Sonication max {}\n Sonication certainty {}\n alpha {}\n beta {}\n\}". format(
-                super.__repr__(), self.read_len, self.sonic_min, self.sonic_max, self.sonic_mode,
-                self.sonic_certainty, self.alpha, self.beta)
+        
+        return "{} Read Lenght {}\n Sonication minimum {}\n Sonication mode {}\n Sonication max {}\n Sonication certainty {}\n alpha {}\n beta {}\n". format(
+                super(self.__class__, self).__repr__(), self.read_len, self.sonic_min, self.sonic_max, self.sonic_mode, self.sonic_certainty, self.alpha, self.beta)
 
 ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
 
@@ -199,10 +199,11 @@ class SlicePickerPair(SlicePicker):
 #   ACTION METHODS
 ########################################################################
 
-    def pick_pair (self, source, read_len, sonic_min, sonic_max, sonic_mode, sonic_certainty, repeats, ambiguous, mut_freq = 0):
-        """Generate a candidate read pair from a fragment of a length following a distribution mimicking sonication smire
-         The presence or absence of repeats and ambiguous DNA bases can be checked and a given frequency of bases can 
-         be randomly mutated
+    def pick_slice (self, source):
+        """Generate a candidate read pair from a fragment of a length
+        following a distribution mimicking sonication smire. The
+        presence or absence of repeats and ambiguous DNA bases can be
+        checked and a given frequency of bases can be randomly mutated
          """
 
         # Guard condition if not possible to find a valid pair after 100 tries

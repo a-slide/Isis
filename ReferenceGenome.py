@@ -6,7 +6,7 @@ import gzip
 from Bio import SeqIO # Require Biopython
 
 
-class ReferenceGenome:
+class ReferenceGenome(object):
     """Import reference sequences from a fasta files and store each of
     them in a dictionary. The class provide a method get a random
     biopython seqrecord slice from one of the reference sequences,

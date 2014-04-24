@@ -5,7 +5,7 @@ from random import sample, randint
 from SlicePicker import SlicePicker
 
 
-class ReferenceJunctions:
+class ReferenceJunctions(object):
     """"""
 
 ########################################################################################################################

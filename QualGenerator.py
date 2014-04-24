@@ -2,7 +2,7 @@
 from random import gauss
 
 
-class QualGenerator:
+class QualGenerator(object):
     """Accessory class generating quality strings following a given
     pattern"""
 

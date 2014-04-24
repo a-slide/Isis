@@ -1,6 +1,5 @@
 
-
-class FastqGenerator:
+class FastqGenerator(object):
     """Class description"""
 
 ####################################################################################################
@@ -19,11 +18,10 @@ class FastqGenerator:
 #   ACTION METHODS
 ####################################################################################################
 
-    def fastq_single (self, slice_picker, qual_generator, source, read_len, repeats, ambiguous,
-                      mut_freq = 0):
+    def fastq_single (self, slice_picker, qual_generator, source):
         """"""
         # Ask a seqReccord slice to a reference sequence source
-        read = s.pick_single(source,read_len, repeats, ambiguous, mut_freq)
+        read = s.pick_slice(source)
 
         # Add a phred quality string the seqReccord
         read.letter_annotations["phred_quality"] = qual_generator.random_qual_string()
