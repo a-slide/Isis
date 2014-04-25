@@ -2,9 +2,7 @@
 class FastqGenerator(object):
     """Class description"""
 
-####################################################################################################
-#   FONDAMENTAL METHODS
-####################################################################################################
+#####    FONDAMENTAL METHODS    #####
     
     def __repr__(self):
         """Long representation"""
@@ -14,9 +12,7 @@ class FastqGenerator(object):
         """Short representation"""
         return "<Instance of " + self.__module__ + ">\n"
     
-####################################################################################################
-#   ACTION METHODS
-####################################################################################################
+#####    PUBLIC METHODS    #####
 
     def fastq_single (self, slice_picker, qual_generator, source):
         """"""
@@ -44,10 +40,7 @@ class FastqGenerator(object):
                            repeats, ambiguous, mut_freq)
         
         
-
-####################################################################################################
-#   PRIVATE METHODS
-####################################################################################################
+#####    PRIVATE METHODS    #####
 
     def _do_something (self):
         """Do something inside the object"""
