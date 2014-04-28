@@ -38,18 +38,7 @@ sonic_mode	200
 # Certainty of the sonication smire: 5 (wide peak) to 50 (thin peak). Recommanded = 10
 sonic_certainty	10
 
-# Quality score scale of fastq output file = solexa (CASAVA < 1.3), illumina (CASAVA 1.3 to 1.7), sanger (which is CASAVA >= 1.8)
-qual_scale	illumina
-
-# mean PHRED quality  at start, middle and end of reads between 0 and 40
-qual_start	20
-qual_mid	25
-qual_end	20
-
-# standard deviation of PHRED quality  at start, middle and end of reads
-qvar_start	2
-qvar_mid	1
-qvar_end	10
-
-# Number de available threads for distributed computing
-nb_thread	12 
+# Quality score scale of fastq output file = solexa (CASAVA < 1.3), illumina (CASAVA 1.3 to 1.7), sanger (CASAVA >= 1.8)
+qual_scale	sanger
+# Quality range for mean Phred scores = very_good, good, medium, bad, very_bad
+qual_range	good

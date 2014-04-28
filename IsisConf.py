@@ -1,26 +1,34 @@
-from ConfFileParser import ConfFileParser
+# Standard library packages
 from sys import maxsize
 import optparse
 
+# Local packages
+from ConfFileParser import ConfFileParser
+
+####################################################################################################
+
 class IsisConf:
-    """Class description"""
+    """Import configuration parameters from command lines arguments and
+    verify parameters value range and validity. Users are invited to
+    corect their values if a parameters is invalid.
+    """
 
-########################################################################################################################
-#   FONDAMENTAL METHODS
-########################################################################################################################
+###    FONDAMENTAL METHODS    ###
 
-
-    # TODO Define possible remaining exceptions?
     def __init__(self):
-
-        # dictionnary to store validated parameters from command line arguments and conf_file parsing
+        """ Import parameters and verify their values.
+        """ 
+        # dictionnary to store validated parameters from command line
+        # arguments and conf_file parsing
         self.d = {}
 
         #### Parse command line argument ####
-        # add hg_filename, vg_filename, conf_filename and output_prefix entries in dictionnary (dict concatenation operator)
+        # add hg_filename, vg_filename, conf_filename and output_prefix
+        # entries to self.d
         self._optparser("hg_filename", "vg_filename", "conf_filename", "output_prefix")
 
-        #### Extract configuration parameters from the conf file by creating a instance of ConfFileParser ####
+        #### Extract configuration parameters from the conf file
+        #creating a instance of ConfFileParser ####
         self.conf = ConfFileParser(self.d["conf_filename"])
 
         # Overall quantity of reads
@@ -31,13 +39,15 @@ class IsisConf:
         self.d["mut_freq"] = self._import_freq("mut_freq")
         # Sequencing mode. If true = pair end alse = single end
         self.d["pair_end"] = self._import_boolean("pair_end", True)
-        # Max number of chimeric bases in a given read. Boundaries differs if single or pair end mode
+        
+        # Max number of chimeric bases in a given read.
+        # Boundaries differs if single or pair end mode
         if self.d["pair_end"]:
             self.d["max_chimeric"] = self._import_integer("max_chimeric",0,self.d["read_len"],self.d["read_len"]/3)
         else:
             self.d["max_chimeric"] = self._import_integer("max_chimeric",0,self.d["read_len"]/2,self.d["read_len"]/3)
         
-        # host genome frequency + Virus genome frequency + True junctions frequency + # False junctions frequency
+        # Relative frequencies of each fastq source in the final dataset
         self.d["freq_hg"] = self._import_freq("freq_hg")
         self.d["freq_vg"] = self._import_freq("freq_vg")
         self.d["freq_tj"] = self._import_freq("freq_tj")
@@ -55,81 +65,68 @@ class IsisConf:
         self.d["nread_fj"] = int (self.d["freq_fj"] * self.d["read_num"])
 
         # Mean number of sampling in true junctions and false junction
-        samp_tj = self._import_integer("samp_tj",0,self.d["nread_tj"], 100) # Should be more than 10
-        samp_fj = self._import_integer("samp_fj",0,self.d["nread_fj"], 1) # Should be 1 or 0
+        # Should be more than 10
+        samp_tj = self._import_integer("samp_tj",0,self.d["nread_tj"], 100)
+        # Should be 1 or 0
+        samp_fj = self._import_integer("samp_fj",0,self.d["nread_fj"], 1)
 
-        # Number of uniq true junction in the pool of junction to be generated
+        # Nb of true junction in the pool of junction to be generated
         self.d["uniq_tj"] = int (float(self.d["nread_tj"])/samp_tj)
-        # Number of uniq true junction in the pool of junction to be generated
+        # Nb of False junction in the pool of junction to be generated
         self.d["uniq_fj"] = int (float(self.d["nread_fj"])/samp_fj)
 
-        ## Allow or forbid sampling in repeat regions (lowercase characters), ambigous DNA (Ambigous IUPAC code) and duplicated reads.
+        # Allow or forbid sampling in repeat regions (lowercase)
+        # ambigous DNA (Ambigous IUPAC code) and duplicated reads.
         self.d["repeats"] = self._import_boolean("repeats", False)
         self.d["ambigous"] = self._import_boolean("ambigous", False)
         self.d["duplicate"] = self._import_boolean("duplicate", False)
 
-        ## Options of fragment sonication distribution to set up if paired end mode
+        ## Options of fragment sonication distribution for pe mode
         # Maximal Minimal and mode of sonication size max > mode > min
         self.d["sonic_min"] = self._import_integer ("sonic_min", self.d["read_len"]+self.d["max_chimeric"], None, 200)
         self.d["sonic_mode"] = self._import_integer ("sonic_mode", self.d["sonic_min"], None, 400)
         self.d["sonic_max"] = self._import_integer ("sonic_max", self.d["sonic_mode"], None, 1000)
 
-        # Certainty of the sonication smire: 5 (wide peak) to 50 (thin peak). Recommanded = 10
+        # Certainty of the sonication smire
         self.d["sonic_certainty"] = self._import_integer("sonic_certainty", 5, 50, 10)
 
-        # Quality score scale of fastq output file
-        self.d["qual_scale"] = self._import_string("qual_scale", ["illumina", "solexa", "sanger"])
+        # Quality score scale of fastq output file and quality range
+        self.d["qual_scale"] = self._import_string("qual_scale",
+            ["illumina", "solexa", "sanger"])
+        self.d["qual_range"] = self._import_string("qual_range",
+            ["very_good", "good", "medium", "bad", "very_bad"])
 
-        # Mean quality score of fastq output file at start, middle and end of reads between 0 and 40
-        self.d["qual_start"] = self._import_integer ("qual_start",0, 40, 30)
-        self.d["qual_mid"] = self._import_integer ("qual_mid",0, 40, 35)
-        self.d["qual_end"] = self._import_integer ("qual_end",0, 40, 30)
-
-        # Range of quality variation at start, middle and end of reads between 0 and 20
-        self.d["qvar_start"] = self._import_integer ("qvar_start", 0, 20, 5)
-        self.d["qvar_mid"] = self._import_integer ("qvar_mid", 0, 20, 2)
-        self.d["qvar_end"] = self._import_integer ("qvar_end", 0, 20, 10)
-
-        # Number of available threads for distributed computing
-        self.d["nb_thread"] = self._import_integer ("nb_thread", 1, None, 1)
-
-
-## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
     def __repr__ (self):
-        """Long description string used by interpreter and repr"""
+        """Long description string used by interpreter and repr
+        """
         # A key list is created to output a sorted list of dict entries
         key_list = self.d.keys()
         key_list.sort()
 
         result = self.__str__()
         for key in key_list:
-            result += "{0} :\t{1}\n".format(key,self.d[key])
+            result += "{} :\t{}\n".format(key,self.d[key])
         result += ">"
         return result
 
 
     def __str__(self):
-        """Short representation"""
+        """Short representation
+        """
         return "<Instance of " + self.__module__ + ">\n"
 
-########################################################################################################################
-#   GETERS
-########################################################################################################################
+###    GETERS    ###
 
     def getDict (self):
-        """Grant acces to the complete dictionary"""
         return self.d
 
-
     def get (self, key ):
-        """Give acces to individual values in conf_dict by using its key name"""
         return self.d[key]
 
+###    PRIVATE METHODS    ###
 
-########################################################################################################################
-#   PRIVATE METHODS
-########################################################################################################################
-
+## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
+    
     def _optparser(self, hg, vg, conf, output):
         """Parse command line arguments prompt and verify the filename"""
         usage_string = "%prog -H Host_genome.fasta[.gz] -V Viral_genome.fasta[.gz] -C Conf_file.txt [-o Output_prefix]"
@@ -152,11 +149,10 @@ class IsisConf:
         # No need to check this options
         self.d[output] = options.output_prefix
 
-
     def _check_file (self, path, key):
         """Try to path from the opt dictionnary"""
         if not path:
-            path = raw_input ("{0} is a mandatory parameter. Please enter a valid path : ".format(key))
+            path = raw_input ("{} is a mandatory parameter. Please enter a valid path : ".format(key))
 
         while True:
             try:
@@ -167,7 +163,7 @@ class IsisConf:
                 print ("Error : " + path + " can't be read")
                 path = raw_input ("Please enter a valid path :  ")
 
-## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
+## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
 
     def _import_integer(self, name, min = None, max = None, default = None):
         """Import an integer from conf dict and validate its value"""
@@ -183,7 +179,6 @@ class IsisConf:
             print ("Error : {0} value is not a invalid integer or is outside of boundaries (min = {1}, max = {2})".format(name, min, max))
             return self._define_int (min, max, default, name)
 
-
     def _define_int (self, min, max, default, name):
         while (True):
             if raw_input ("Would you like to use the default value < {0} > (Y/N)?\n".format(default)) in 'Yy':
@@ -196,9 +191,9 @@ class IsisConf:
             except ValueError:
                 print ("Error : {0} value is not a invalid integer or is outside of boundaries (min = {1}, max = {2})".format(name, min, max))
 
-
     def _valid_int(self, val, min, max):
-        """Predicate raising a ValueError exception if a value is not in the given range"""
+        """Predicate raising a ValueError exception if a value is not
+        in the given range"""
         max = maxsize if max == None else max
         min = -maxsize if min == None else min
 
@@ -207,10 +202,11 @@ class IsisConf:
         else:
             raise ValueError
 
-## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
+## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
     
     def _import_freq(self, name):
-        """Import an frequency as a float from conf dict and validate its value"""
+        """Import an frequency as a float from conf dict and validate
+        its value"""
         try:
             val = float(self.conf.get(name))
             if self._valid_freq(val):
@@ -233,7 +229,6 @@ class IsisConf:
             except ValueError:
                 print ("Error : {0} value is not a invalid frequency (min = 0, max = 1)".format(name, min, max))
 
-
     def _valid_freq(self, val):
         """Predicate raising a ValueError exception if a value is not in the given range"""
         if val >= 0 and val <= 1:
@@ -241,10 +236,9 @@ class IsisConf:
         else:
             raise ValueError
 
-## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
-
     def _verify_freq_sum(self, key_list):
-
+        """ Verify if the sum of feq is equal to one
+        """
         sum_freq = sum([self.d[key] for key in key_list])
         if sum_freq == 1:
             return
@@ -261,7 +255,7 @@ class IsisConf:
             self.d[key] = self._define_freq (key)
         return
 
-## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
+## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
 
     def _import_string(self,name,allowed_entries):
         """Import a string from conf dict and validate its value"""
@@ -276,7 +270,6 @@ class IsisConf:
             print ("Error : {0} value is not in the list of allowed values:\n {1}".format(name, allowed_entries))
             return self._define_string (allowed_entries, name)
 
-
     def _define_string (self, allowed_entries, name):
         while (True):
             if raw_input ("Would you like to use the default value < {0} > (Y/N)?\n".format(allowed_entries[0])) in 'Yy':
@@ -289,15 +282,15 @@ class IsisConf:
             except ValueError:
                 print ("Error : {0} value is not in the list of allowed values:\n {1}".format(name, allowed_entries))
 
-
     def _valid_string(self, val, allowed_entries):
-        """Predicate raising a ValueError exception if the string is not in the list of allowed entries"""
+        """Predicate raising a ValueError exception if the string is not
+        in the list of allowed entries"""
         if val in allowed_entries:
             return True
         else:
             raise ValueError
 
-## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
+## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ##
     
     def _import_boolean (self, name, default):
         """Import a boolean from conf dict and validate its value"""
@@ -305,15 +298,16 @@ class IsisConf:
         false_list = ['False', 'false', 0, 'f', 'F']
         try:
             val = self.conf.get(name)
-            if self._valid_string(val,true_list+false_list):  # Use the same predicate as for strings
+            # Use the same predicate as for strings
+            if self._valid_string(val,true_list+false_list):
                 return True if val in true_list else False
+                
         except KeyError:
             print ("Error : {0} was not found in {1})".format(name, self.d["conf_filename"]))
             return self._define_bool (true_list, false_list, default, name)
         except ValueError:
             print ("Error : {0} value is not in the list of allowed values:\n {1}".format(name, true_list+false_list))
             return self._define_bool (true_list, false_list, default, name)
-
 
     def _define_bool (self, true_list, false_list, default, name):
         while (True):
@@ -323,6 +317,6 @@ class IsisConf:
                 val = raw_input ("Please enter a new value for {0}:  ".format(name))
                 if self._valid_string(val,true_list+false_list): # Use the same
                     return True if val in true_list else False
-            # if the value is still not suitable print a meassage and try again
+            # if the value is still not valid print a meassage and try again
             except ValueError:
                 print ("Error : {0} value is not in the list of allowed values:\n {1}".format(name, true_list+false_list))

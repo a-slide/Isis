@@ -16,15 +16,16 @@ class ReferenceGenome(object):
 
 ###    FONDAMENTAL METHODS    ###
 
-    def __init__(self, source, filename):
+    def __init__(self, filename):
         """Import reference sequences from fasta file and create a list
         of probability to sample in each ref sequence
         """
-        # Store the source name in a global variable
-        self.source = source
-        
         # Dictionnary of bioPython record created from fasta file
         self.d = self._import_fasta(filename)
+        
+        # Initialize a counter for each reference that will be
+        # incremented each time _random_slice choose this reference
+        self._init_samp_counter()
         
         # List cummulative probabilities of each sequence to be picked
         # calculated from to their respective size.
@@ -33,7 +34,7 @@ class ReferenceGenome(object):
     def __repr__(self):
         """Long description string used by interpreter and repr
         """
-        result = "{}<Source = {}>\n\n".format(self.__str__(), self.source)
+        result = "{}\n".format(self.__str__())
         for entry in self.d.values():
             result += "<{}\nLenght:{}>\n".format(entry, len(entry))
         return result
@@ -41,31 +42,17 @@ class ReferenceGenome(object):
     def __str__(self):
         """Short representation
         """
-        return "<Instance of " + self.__module__ + ">\n"
-
-    def __doc__(self):
-        pass
+        return "<Instance of " + self.__module__ + ">"
 
 ###    GETERS    ###
 
-    def getSource(self):
-        """Give acces to the name of the source
-        """
-        return self.source
-
     def get(self, varkey):
-        """ Give acces to individual values in d by using its key name
-        """
         return self.d[varkey]
 
     def getDict(self):
-        """ Give acces to the complete dictionary
-        """
         return self.d
 
     def getProba(self):
-        """  Acces to the cumulative frequency list
-        """
         return self.proba_list
 
 ###    PUBLIC METHODS    ####
@@ -79,7 +66,7 @@ class ReferenceGenome(object):
             refseq = self._random_refseq()
             
             # If the size is valid return a slice
-            if len(self.d[refseq]) >= size :
+            if size <= len(self.d[refseq]):
                 return self._random_slice(refseq, size)
 
         # if no valid size was found
@@ -101,14 +88,21 @@ class ReferenceGenome(object):
 
             d = SeqIO.to_dict(SeqIO.parse(handle, "fasta"))
             handle.close()
+            
             return d
             
         # Try to open the file fist gz compressed and uncompressed
         except IOError:
                print('CRITICAL ERROR. The fasta file ' + filename + ' is not readable. Exit')
                exit
-
-
+    
+    def _init_samp_counter(self):
+        """ Initialize a counter for each reference that will be
+        incremented each time _random_slice choose this reference
+        """
+        for name, record in self.d.items():
+            record.annotations ["nb_samp"] = 0
+    
     def _calculate_proba(self):
         """Return a 2 entries list with the name of the sequence and a
         cumulative frequency of the sequence
@@ -124,7 +118,8 @@ class ReferenceGenome(object):
         return proba_list
 
     def _random_refseq(self):
-        """Return a random sequence from d according the respective size of references
+        """Return a random sequence from d according the respective size
+         of references
         """
         # Define a pseudo-random decimal frequency
         rand_freq = random()
@@ -141,26 +136,26 @@ class ReferenceGenome(object):
         start = randint(0, len(self.d[refseq])-size)
         end = start+size
 
-        # Randomly choose an orientation reverse or forward for the fragment
+        # Randomly choose an orientation reverse or forward and sample 
+        # a slice
         if randint(0,1):
-            slice = self.d[refseq][start:end]
-            slice.annotations["location"] = [start, end]
+            s = self.d[refseq][start:end]
+            s.annotations["location"] = [start, end]
         else:
-            slice = self.d[refseq][start:end].reverse_complement()
-            slice.annotations["location"] = [end, start]
+            s = self.d[refseq][start:end].reverse_complement()
+            s.annotations["location"] = [end, start]
         
         # Add informations to the annotations dictionnary
-        slice.annotations["source"] = self.source
-        slice.annotations["refseq"] = refseq
-        slice.annotations["size"] = size
+        s.annotations["refseq"] = refseq
         
-        # Undefine Name and description and define id  
-        slice.name = slice.description = None
-        slice.id = "{}|{}:{}-{}|size:{}".format(
-            self.d["source"],
-            self.d["refseq"],
-            self.d["location"][0],
-            self.d["location"][1],
-            self.d["size"])
-
-        return slice
+        # Undefine description and define id and name 
+        s.name = s.description = ""
+        s.id = "{}:{}-{}".format(
+            s.annotations["refseq"],
+            s.annotations["location"][0],
+            s.annotations["location"][1])
+        
+        # Increment the sampling counter of the refseq
+        self.d[refseq].annotations["nb_samp"] += 1
+        
+        return s

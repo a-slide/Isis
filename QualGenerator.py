@@ -1,14 +1,13 @@
 # Standard library packages
 from random import gauss
 
+####################################################################################################
 
 class QualGenerator(object):
     """Accessory class generating quality strings following a given
     pattern"""
 
-####################################################################################################
-#   FONDAMENTAL METHODS
-####################################################################################################
+###    FONDAMENTAL METHODS    ###
 
     def __init__(self, length, quality):
         """Create the class by asigning a lenght and a pattern of 
@@ -16,39 +15,37 @@ class QualGenerator(object):
         """
         self.length = length
         self.qual_pattern = self._quality_pattern(length, quality)
-        
-## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## 
 
     def __repr__(self):
         """Long representation of the object including a comprehensive
          representation of self.qual_pattern.  
         """
-        mean = "".join([str(i[0])+" " for i in self.qual_pattern])
-        sd = "".join([str(i[1])+" " for i in self.qual_pattern])
-        
-        return "{}\nMEAN\n{}\n\nSTANDARD DEVIATION\n{}\n".format(self.__str__(), mean, sd)
+        return "{}\n Mean qual pattern :\n{}\nStandard dev pattern :\n{}".format(
+            self.__str__(),
+            "".join([str(i[0])+" " for i in self.qual_pattern]),
+            "".join([str(i[1])+" " for i in self.qual_pattern]))
 
     def __str__(self):
         """Short representation"""
-        return "<Instance of " + self.__module__ + ">\n"
+        return "<Instance of " + self.__module__ + ">"
 
-####################################################################################################
-#   GETERS
-####################################################################################################
+###    GETERS    ###
 
     def get_qual_pattern(self):
-        """Return qual_pattern"""
-        return qual_pattern
+        return self.qual_pattern
+    
+    def get_mean_pattern(self):
+        return [i[0] for i in self.qual_pattern]
+    
+    def get_sd_pattern(self):
+        return [i[1] for i in self.qual_pattern]
 
     def get_length(self):
-        """Return variable"""
-        return length
+        return self.length
 
-####################################################################################################
-#   PUBLIC METHODS
-####################################################################################################
+###    PUBLIC METHODS    ####
 
-    def random_qual_string(self):
+    def qual_score(self):
         """Generate a quality string mimicking a real fastq qual track
         Based on the pattern defined an class instanciation.  
         """
@@ -75,9 +72,7 @@ class QualGenerator(object):
 
         return qual_string
 
-####################################################################################################
-#   PRIVATE METHODS
-####################################################################################################
+###    PRIVATE METHODS    ###
 
     def _valid_score(self, qual_mean, sigma): # sigma >= 1
         """Calculate a new valid score to based on the mean score and a
@@ -88,8 +83,6 @@ class QualGenerator(object):
         # the part coresponding to the gaussian fluctuation will not be
         # took into acount
         return score if 0 <= score <= 40 else qual_mean
-        
-## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## 
 
     def _quality_pattern(self, length, quality):
         """Define a quality pattern for every positions in a given
@@ -119,8 +112,6 @@ class QualGenerator(object):
                 qual_pattern.append([mean, sd])
         
         return qual_pattern
-
-## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## ## 
 
     def _quality_parameters(self, length, quality):
         """Return quality parameters at borders of 4 areas within the

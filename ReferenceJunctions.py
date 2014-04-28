@@ -13,19 +13,21 @@ class ReferenceJunctions(object):
 
 ###    FONDAMENTAL METHODS    ###
 
-    def __init__(self, source, min_chimeric, size, njun, ref1, ref2, repeats, ambiguous):
+    def __init__(self, min_chimeric, size, njun, ref1, ref2, repeats, ambiguous):
         """Create a dictionnary of junctions by merging 2 SeqRecords
         """
         # Store global variable
-        self.source = source
         self.min_chimeric = min_chimeric
-        # initialise junction dictionnary 
+        # Store the len of junctions
+        self.lenjun = 2 * size
+        
+        # Initialise junction dictionnary 
         self.d = self._create_junctions_dict(size, njun, ref1, ref2, repeats, ambiguous)
 
     def __repr__(self):
         """Long description string used by interpreter and repr
         """
-        result = "{}<Source = {}>\n\n".format(self.__str__(), self.source)
+        result = "{}\n".format(self.__str__())
         for entry in self.d.values():
             result += "<{}\nLenght:{}>\n".format(entry, len(entry))
         return result
@@ -33,23 +35,14 @@ class ReferenceJunctions(object):
     def __str__(self):
         """Short representation
         """
-        return "<Instance of " + self.__module__ + ">\n"
+        return "<Instance of " + self.__module__ + ">"
 
 ###    GETERS    ###
 
-    def getSource(self):
-        """Give acces to the name of the source
-        """
-        return self.source
-
     def get(self, varkey):
-        """ Give acces to individual values in d by using its key name
-        """
         return self.d[varkey]
 
     def getDict(self):
-        """ Give acces to the complete dictionary
-        """
         return self.d
 
 ###    PUBLIC METHODS    ####
@@ -57,17 +50,18 @@ class ReferenceJunctions(object):
     def get_slice (self, size):
         """Generate a slice overlapping a junction and return it
         """
-        # Guard condition
-        for count in range (100):
-            # Pick a random reference junction
-            refseq = sample(self.d, 1)[0]
-            
-            # If the size is valid return a slice
-            if 2*self.min_chimeric <= size <= len(self.d[refseq]):
-                return self._random_slice (refseq, size, lenjun)
+        # Guard conditions
+        if  size < 2 * self.min_chimeric:
+            raise Exception ("The size of the slice is too short.\n\
+            Cannot define a fragment with the require minimal number of bases\
+            overlapping each reference sequence")
+        if size > self.lenjun:
+            raise Exception ("The size of the slice is longer than the reference")
         
-        # if no valid size was found
-        raise Exception ("No valid slice was found")
+        # Pick a random reference junction and return a slice of it
+        refseq = sample(self.d, 1)[0]
+        return self._random_slice (refseq, size)
+    
 
 ###    PRIVATE METHODS    ###
 
@@ -81,32 +75,33 @@ class ReferenceJunctions(object):
         for i in range(njunctions):
             
             # Pick 1 slice in each reference
-            seq1 = slicer.pick_single(ref1)
-            seq2 = slicer.pick_single(ref2)
+            s1 = slicer.pick_slice(ref1)
+            s2 = slicer.pick_slice(ref2)
             
             # Create a new junction from the 2 slice
-            junction = seq1 + seq2
+            junction = s1 + s2
             
             # Define id, name and description to the SeqReccord object
+            junction.name = junction.description = ""
             junction.id = "#{:010}".format(i)
-            junction.name = junction.description = None
             
             # Add informations to the annotations dictionnary
             junction.annotations = {
-            "seq1_source"       : seq1.annotations["source"],
-            "seq2_source"       : seq2.annotations["source"],
-            "seq1_refseq"       : seq1.annotations["refseq"],
-            "seq2_refseq"       : seq2.annotations["refseq"],
-            "seq1_location"     : seq1.annotations["location"],
-            "seq2_location"     : seq2.annotations["location"],
-            "seq1_orientation"  : seq1.annotations["orientation"],
-            "seq2_orientation"  : seq2.annotations["orientation"]}
-
-            junctions_dict[junction.name] = junction
+                "ref1" : ref1,
+                "ref2" : ref2,
+                "ref1_refseq" : s1.annotations["refseq"],
+                "ref2_refseq" : s2.annotations["refseq"],
+                "ref1_location" : s1.annotations["location"],
+                "ref2_location" : s2.annotations["location"],
+                "nb_samp" : 0,}
+                # nb_samp will be incremented each time a junction is
+                # sampled in the reference
+            
+            junctions_dict[junction.id] = junction
 
         return junctions_dict
 
-    def _random_slice (self, refseq, size, lenjun):
+    def _random_slice (self, refseq, size):
         """Return a slice overlapping a junction from a biopython Seqrecord in d
         """
         # Example of the strategy with size = 20 and min chimeric = 6
@@ -116,30 +111,30 @@ class ReferenceJunctions(object):
         # End area      ////////////////////////////////////ooooooo////////////////
 
         # Randomly choose the slice start position in the autorized area
-        start = randint((lenjun/2 + self.min_chimeric - size), (lenjun/2 - self.min_chimeric))
+        start = randint((self.lenjun/2 + self.min_chimeric - size), (self.lenjun/2 - self.min_chimeric))
         end = start + size
 
-        # Randomly choose an orientation reverse or forward for the fragment
+        # Randomly choose an orientation reverse or forward and sample 
+        # a slice
         if randint(0,1):
-            slice = self.d[refseq][start:end]
-            slice.annotations["location"] = [start, end]
+            s = self.d[refseq][start:end]
+            s.annotations["location"] = [start, end]
         else:
-            slice = self.d[refseq][start:end].reverse_complement()
-            slice.annotations["location"] = [end, start]
+            s = self.d[refseq][start:end].reverse_complement()
+            s.annotations["location"] = [end, start]
         
         # Add informations to the annotations dictionnary
-        slice.annotations["source"] = self.source
-        slice.annotations["refseq"] = refseq
-        slice.annotations["size"] = size
+        s.annotations["refseq"] = refseq
         
-        # Undefine Name and description and define id  
-        slice.name = slice.description = None
-        slice.id = "{}|{}:{}-{}|size:{}".format(
-            self.d["source"],
-            self.d["refseq"],
-            self.d["location"][0],
-            self.d["location"][1],
-            self.d["size"])
+        # Undefine description and define id and name  
+        s.name = s.description = ""
+        s.id = "{}:{}-{}".format(
+            s.annotations["refseq"],
+            s.annotations["location"][0],
+            s.annotations["location"][1])
+        
+        # Increment the sampling counter of the refseq
+        self.d[refseq].annotations["nb_samp"] += 1
 
-        return slice
+        return s
 
