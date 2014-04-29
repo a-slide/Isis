@@ -1,6 +1,7 @@
 # Standard library packages
 from random import random, randint
 import gzip
+import csv
 
 # Third party packages
 from Bio import SeqIO # Require Biopython
@@ -16,33 +17,39 @@ class ReferenceGenome(object):
 
 ###    FONDAMENTAL METHODS    ###
 
-    def __init__(self, filename):
+    def __init__(self, name, filename):
         """Import reference sequences from fasta file and create a list
         of probability to sample in each ref sequence
         """
+        
+        print "Initialisation of {}...".format(name)
+        
+        # Store object variables
+        self.name = name
+        
         # Dictionnary of bioPython record created from fasta file
         self.d = self._import_fasta(filename)
         
         # Initialize a counter for each reference that will be
         # incremented each time _random_slice choose this reference
-        self._init_samp_counter()
+        self.reset_samp_counter()
         
         # List cummulative probabilities of each sequence to be picked
         # calculated from to their respective size.
         self.proba_list = self._calculate_proba()
-
+        
     def __repr__(self):
         """Long description string used by interpreter and repr
         """
         result = "{}\n".format(self.__str__())
         for entry in self.d.values():
-            result += "<{}\nLenght:{}>\n".format(entry, len(entry))
+            result += "{}\nLenght:{}\n".format(entry, len(entry))
         return result
 
     def __str__(self):
         """Short representation
         """
-        return "<Instance of " + self.__module__ + ">"
+        return "{} : Instance of {}".format(self.__module__, self.name)
 
 ###    GETERS    ###
 
@@ -54,6 +61,9 @@ class ReferenceGenome(object):
 
     def getProba(self):
         return self.proba_list
+    
+    def getName(self):
+        return self.name
 
 ###    PUBLIC METHODS    ####
 
@@ -72,6 +82,29 @@ class ReferenceGenome(object):
         # if no valid size was found
         raise Exception("No valid slice was found")
 
+    def reset_samp_counter(self):
+        """ Initialize or reset counter for each reference that will be
+        incremented each time _random_slice choose this reference
+        """
+        for name, record in self.d.items():
+            record.annotations ["nb_samp"] = 0
+
+    def write_samp_report (self):
+        """ Create a simple csv report 
+        """
+        # Open a file for writting with python csv module
+        with open(self.name+"_samp_report.csv", 'w') as csvfile:
+            writer = csv.writer(csvfile, delimiter='\t', quoting=csv.QUOTE_NONE)
+            writer.writerow(["chr", "lenght", "nb_samp"])
+            
+            # Create a sorted list of refseq
+            ref_list = self.d.keys()
+            ref_list.sort()
+            
+            # Export each refseq characteristics in a file
+            for ref in ref_list:
+                writer.writerow([ref, len(self.d[ref]), self.d[ref].annotations["nb_samp"]])
+            
 ###    PRIVATE METHODS    ###
 
     def _import_fasta(self, filename):
@@ -80,10 +113,10 @@ class ReferenceGenome(object):
         # Try to open the file fist gz compressed and uncompressed
         try: 
             if filename.rpartition(".")[-1] == "gz":
-                print("Uncompressing and extracting data")
+                print("\tUncompressing and extracting data")
                 handle = gzip.open(filename, "r")
             else:
-                print("Extracting data")
+                print("\tExtracting data")
                 handle = open(filename, "r")
 
             d = SeqIO.to_dict(SeqIO.parse(handle, "fasta"))
@@ -95,13 +128,6 @@ class ReferenceGenome(object):
         except IOError:
                print('CRITICAL ERROR. The fasta file ' + filename + ' is not readable. Exit')
                exit
-    
-    def _init_samp_counter(self):
-        """ Initialize a counter for each reference that will be
-        incremented each time _random_slice choose this reference
-        """
-        for name, record in self.d.items():
-            record.annotations ["nb_samp"] = 0
     
     def _calculate_proba(self):
         """Return a 2 entries list with the name of the sequence and a
@@ -150,7 +176,8 @@ class ReferenceGenome(object):
         
         # Undefine description and define id and name 
         s.name = s.description = ""
-        s.id = "{}:{}-{}".format(
+        s.id = "{}|{}:{}-{}".format(
+            self.name,
             s.annotations["refseq"],
             s.annotations["location"][0],
             s.annotations["location"][1])

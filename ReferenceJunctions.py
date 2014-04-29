@@ -1,5 +1,6 @@
 # Standard library packages
 from random import sample, randint
+import csv
 
 # Local packages
 from SlicePicker import SlicePickerSingle
@@ -13,29 +14,35 @@ class ReferenceJunctions(object):
 
 ###    FONDAMENTAL METHODS    ###
 
-    def __init__(self, min_chimeric, size, njun, ref1, ref2, repeats, ambiguous):
+    def __init__(self, name, min_chimeric, size, njun, ref1, ref2, repeats, ambiguous):
         """Create a dictionnary of junctions by merging 2 SeqRecords
         """
-        # Store global variable
+        print "Initialisation of {}...".format(name)
+         
+        # Store object variables
+        self.name = name
         self.min_chimeric = min_chimeric
-        # Store the len of junctions
         self.lenjun = 2 * size
         
         # Initialise junction dictionnary 
         self.d = self._create_junctions_dict(size, njun, ref1, ref2, repeats, ambiguous)
-
+        
+        # Initialize a counter for each reference that will be
+        # incremented each time _random_slice choose this reference
+        self.reset_samp_counter()
+        
     def __repr__(self):
         """Long description string used by interpreter and repr
         """
         result = "{}\n".format(self.__str__())
         for entry in self.d.values():
-            result += "<{}\nLenght:{}>\n".format(entry, len(entry))
+            result += "{}\nLenght:{}\n".format(entry, len(entry))
         return result
 
     def __str__(self):
         """Short representation
         """
-        return "<Instance of " + self.__module__ + ">"
+        return "{} : Instance of {}".format(self.name, self.__module__)
 
 ###    GETERS    ###
 
@@ -44,6 +51,9 @@ class ReferenceJunctions(object):
 
     def getDict(self):
         return self.d
+        
+    def getName(self):
+        return self.name
 
 ###    PUBLIC METHODS    ####
 
@@ -61,7 +71,45 @@ class ReferenceJunctions(object):
         # Pick a random reference junction and return a slice of it
         refseq = sample(self.d, 1)[0]
         return self._random_slice (refseq, size)
-    
+
+    def reset_samp_counter(self):
+        """ Initialize or reset counter for each reference that will be
+        incremented each time _random_slice choose this reference
+        """
+        for name, record in self.d.items():
+            record.annotations ["nb_samp"] = 0
+
+    def write_samp_report (self):
+        """ Create a simple csv report 
+        """
+        # Open a file for writting with python csv module
+        with open(self.name+"_samp_report.csv", 'w') as csvfile:
+            writer = csv.writer(csvfile, delimiter='\t', quoting=csv.QUOTE_NONE)
+            writer.writerow([
+                "junction_id",
+                "ref1_source",
+                "ref1_chr",
+                "ref1_loc",
+                "ref2_source",
+                "ref2_chr",
+                "ref2_loc",
+                "nb_samp"])
+            
+            # Create a sorted list of refseq
+            ref_list = self.d.keys()
+            ref_list.sort()
+            
+            # Export each refseq characteristics in a file
+            for ref in ref_list:
+                writer.writerow([
+                ref,
+                self.d[ref].annotations["ref1"].getName(),
+                self.d[ref].annotations["ref1_refseq"],
+                self.d[ref].annotations["ref1_location"],
+                self.d[ref].annotations["ref2"].getName(),
+                self.d[ref].annotations["ref2_refseq"],
+                self.d[ref].annotations["ref2_location"],
+                self.d[ref].annotations["nb_samp"]])
 
 ###    PRIVATE METHODS    ###
 
@@ -69,6 +117,9 @@ class ReferenceJunctions(object):
         """Fill a dictionary with junctions between sequences from ref1
         and ref2
         """
+        
+        print("\tCreating junctions between {} and {}".format(ref1.getName(), ref2.getName()))
+        
         slicer = SlicePickerSingle(size, repeats, ambiguous)
         junctions_dict = {}
 
@@ -83,7 +134,7 @@ class ReferenceJunctions(object):
             
             # Define id, name and description to the SeqReccord object
             junction.name = junction.description = ""
-            junction.id = "#{:010}".format(i)
+            junction.id = "Junction_{:06}".format(i)
             
             # Add informations to the annotations dictionnary
             junction.annotations = {
@@ -92,10 +143,7 @@ class ReferenceJunctions(object):
                 "ref1_refseq" : s1.annotations["refseq"],
                 "ref2_refseq" : s2.annotations["refseq"],
                 "ref1_location" : s1.annotations["location"],
-                "ref2_location" : s2.annotations["location"],
-                "nb_samp" : 0,}
-                # nb_samp will be incremented each time a junction is
-                # sampled in the reference
+                "ref2_location" : s2.annotations["location"]}
             
             junctions_dict[junction.id] = junction
 
@@ -104,12 +152,6 @@ class ReferenceJunctions(object):
     def _random_slice (self, refseq, size):
         """Return a slice overlapping a junction from a biopython Seqrecord in d
         """
-        # Example of the strategy with size = 20 and min chimeric = 6
-        # Junction      -----------------------------|-----------------------------
-        # Chimeric bases                       /////////////
-        # Start area    ///////////////ooooooo////////////////////////////////////
-        # End area      ////////////////////////////////////ooooooo////////////////
-
         # Randomly choose the slice start position in the autorized area
         start = randint((self.lenjun/2 + self.min_chimeric - size), (self.lenjun/2 - self.min_chimeric))
         end = start + size
@@ -128,7 +170,8 @@ class ReferenceJunctions(object):
         
         # Undefine description and define id and name  
         s.name = s.description = ""
-        s.id = "{}:{}-{}".format(
+        s.id = "{}|{}:{}-{}".format(
+            self.name,
             s.annotations["refseq"],
             s.annotations["location"][0],
             s.annotations["location"][1])
