@@ -80,7 +80,8 @@ class ReferenceGenome(object):
                 return self._random_slice(refseq, size)
 
         # if no valid size was found
-        raise Exception("No valid slice was found")
+        raise Exception("ERROR. Unable to find a slice of a valid length after 100 tries.\n\
+        Please review the size of your references or the size of the reads.")
 
     def reset_samp_counter(self):
         """ Initialize or reset counter for each reference that will be

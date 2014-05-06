@@ -22,7 +22,7 @@ class ReferenceJunctions(object):
         # Store object variables
         self.name = name
         self.min_chimeric = min_chimeric
-        self.lenjun = 2 * size
+        self.half_len = size
         
         # Initialise junction dictionnary 
         self.d = self._create_junctions_dict(size, njun, ref1, ref2, repeats, ambiguous)
@@ -62,11 +62,12 @@ class ReferenceJunctions(object):
         """
         # Guard conditions
         if  size < 2 * self.min_chimeric:
-            raise Exception ("The size of the slice is too short.\n\
-            Cannot define a fragment with the require minimal number of bases\
-            overlapping each reference sequence")
-        if size > self.lenjun:
-            raise Exception ("The size of the slice is longer than the reference")
+            raise Exception ("ERROR. The size of the slice is too short to define a fragment\n\
+            with the require minimal number of chimeric bases in each reference sequence.\n\
+            Review your siez of min chimeric base or read length")
+        if size > self.half_len:
+            raise Exception ("ERROR. The size of the slice is longer than the reference.\n\
+            Review your maximal sonication size or the size of junctions")
         
         # Pick a random reference junction and return a slice of it
         refseq = sample(self.d, 1)[0]
@@ -153,7 +154,7 @@ class ReferenceJunctions(object):
         """Return a slice overlapping a junction from a biopython Seqrecord in d
         """
         # Randomly choose the slice start position in the autorized area
-        start = randint((self.lenjun/2 + self.min_chimeric - size), (self.lenjun/2 - self.min_chimeric))
+        start = randint((self.half_len + self.min_chimeric - size), (self.half_len - self.min_chimeric))
         end = start + size
 
         # Randomly choose an orientation reverse or forward and sample 

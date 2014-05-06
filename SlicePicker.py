@@ -106,13 +106,14 @@ class SlicePickerSingle(SlicePicker):
         and ambiguous DNA bases can be checked and a given frequency of 
         bases can be randomly mutated
         """
-        # Guard condition
+        # Guard condition if not possible to find a valid pair after 100 tries
         for count in range(100):
             # Ask a random sequence to the source
             try:
                 read = source.get_slice(self.read_len)
-            except Exception:
-                continue
+            except Exception as e:
+                print e
+                exit (0)
             
             # Link to the source reference object
             read.annotations ["ref"] = source
@@ -122,7 +123,8 @@ class SlicePickerSingle(SlicePicker):
                 return self._mutate_sequence(read)
 
         # If no candidate sequence was found an Exception is raised
-        raise Exception("No valid slice was found")
+        raise Exception("ERROR. Unable to find a valid slice after 100 tries.\n\
+        Please review repetition and ambiguity parameters and verify your reference sequences")
 
 ####################################################################################################
 
@@ -141,7 +143,7 @@ class SlicePickerPair(SlicePicker):
         # Use the super class init method
         super(self.__class__, self).__init__(read_len, repeats, ambiguous, mut_freq)
         
-        if not sonic_min <= sonic_mode <= sonic_max:
+        if not read_len <= sonic_min <= sonic_mode <= sonic_max:
             raise Exception("Wrong sonication parameters")
         
         # Store read length and sonication parameters
@@ -205,8 +207,9 @@ class SlicePickerPair(SlicePicker):
             # Ask a random sequence to the source
             try:
                 fragment = source.get_slice(frag_len)
-            except Exception:
-                continue
+            except Exception as e:
+                print e
+                exit (0)
 
             # Extract pair reads from slice
             read1, read2 = self._extract_pair(fragment, self.read_len, frag_len, source)
@@ -216,7 +219,8 @@ class SlicePickerPair(SlicePicker):
                 return(self._mutate_sequence(read1), self._mutate_sequence(read2))
 
         # If no candidate sequence was found an Exception is raised
-        raise Exception("No valid slice was found")
+        raise Exception("ERROR. Unable to find a valid slice after 100 tries.\n\
+        Please review repetition and ambiguity parameters and verify your reference sequences")
 
 #####    PRIVATE METHODS    #####
 
