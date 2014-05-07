@@ -1,25 +1,17 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from sys import argv
+from matplotlib import pyplot
+from random import gauss
 
-def main ():
-    test("test")
+fig = pyplot.figure(figsize=(20, 10), dpi=100)
+pyplot.title("Distribution of sonication fragment length")
+pyplot.ylabel('Count')
+pyplot.xlabel('Size of fragment')
 
-def Pair(text):
-    print text+" Pair"
+list = [gauss(700, 30) for i in range (10000)]
+pyplot.hist(list, bins = 100, normed=1, facecolor='green', alpha=0.5, align='mid')
 
-def Single(text):
-    print text+" Single"
+# Tweak spacing to prevent clipping of ylabel
+pyplot.subplots_adjust(left=0.15)
 
-
-if __name__ == '__main__':
-    main()
-    
-if __name__ == '__test__':
-    print "test"
-    if argv[1] == "pe":
-        Pair()
-    elif argv[1] == "se":
-        Single()
-    

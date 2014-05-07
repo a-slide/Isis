@@ -8,7 +8,7 @@ class FastqGenerator(object):
 
 #####    FONDAMENTAL METHODS    #####
     
-    def __init__(self, slicer, qualgen, qual_scale):
+    def __init__(self, slicer, qualgen):
         """ Init object with link to SlicePicker and QualGenerator and
         determine the number of available thread for multiprocessing
         """
