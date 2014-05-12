@@ -22,16 +22,17 @@ from FastqGenerator import FastqGeneratorPair
 ##### Global Variables #####
 
 # Store lenght of each fragment for pair end sonication profile
-# graphical output 
+# graphical output
+
 FRAG_LEN = []
 
 #####    MAIN   #####
 
 def main ():
-    """main function"""     
-    
+    """main function"""
+
     pair = True
-    
+
     basename = "test"
     path_vg = "../datasets/Bacterial_backbone.fa"
     path_hg = "../datasets/Helper_plasmid.fa"
@@ -51,24 +52,24 @@ def main ():
     quality_scale = "fastq-sanger"
     min_chimeric = 50
     size_junction = sonic_max if pair else read_len
-    
+
     n_tj = 15
     n_fj = 1000
-    
-    
+
+
     # Import reference genomes and create Reference Junctions
     virus = ReferenceGenome ("virus", path_vg)
     host = ReferenceGenome ("host", path_hg)
     tj = ReferenceJunctions("True_Junction",min_chimeric, size_junction, n_tj, virus, host, repeats, ambiguity,)
     fj = ReferenceJunctions("False_Junction",min_chimeric, size_junction, n_fj, virus, host, repeats, ambiguity,)
-    
-    # Reset sampling counters of Virus and Host reference object 
+
+    # Reset sampling counters of Virus and Host reference object
     virus.reset_samp_counter()
     host.reset_samp_counter()
-    
+
     # Paired end mode
     if pair:
-        print ("Start pair end mode fastq sampling...") 
+        print ("Start pair end mode fastq sampling...")
         # Instantiate accessory classes
         slicer = SlicePickerPair(read_len, sonic_min, sonic_mode, sonic_max, sonic_certainty, repeats, ambiguity, mut_freq)
         qualgen = QualGenerator (read_len, quality)
@@ -82,10 +83,10 @@ def main ():
         write_fastq_pair (fastgen, fj, nread_fj, basename, quality_scale)
         # Output a graphical representation of the fragment len distribution
         frag_len_graph (sonic_min, sonic_max, basename)
-    
+
     # Single end mode
     else:
-        print ("Start single end mode fastq sampling") 
+        print ("Start single end mode fastq sampling")
         # Instantiate accessory classes
         slicer = SlicePickerSingle (read_len, repeats, ambiguity, mut_freq)
         qualgen = QualGenerator (read_len, quality)
@@ -95,17 +96,17 @@ def main ():
         write_fastq_single (fastgen, virus, nread_vg, basename, quality_scale)
         write_fastq_single (fastgen, host, nread_hg, basename, quality_scale)
         write_fastq_single (fastgen, tj, nread_tj, basename, quality_scale)
-        write_fastq_single (fastgen, fj, nread_fj, basename, quality_scale)        
-        
+        write_fastq_single (fastgen, fj, nread_fj, basename, quality_scale)
+
     # Write sampling reports
     virus.write_samp_report()
     host.write_samp_report()
     tj.write_samp_report()
     fj.write_samp_report()
-    
+
     print "END"
     exit (1)
-    
+
 #####    FUNCTIONS   #####
 
 def reset_file (filename):
@@ -116,7 +117,7 @@ def reset_file (filename):
         handle = gzip.open(filename, 'w')
         handle.close()
         print "\t{} initialized".format(filename)
-        
+
     except IOError:
         print('CRITICAL ERROR. {} cannot by open for writing'.format(filename))
         exit
@@ -126,11 +127,11 @@ def write_fastq_single (fastgen, source, nread, basename, qual_scale):
     """
     if nread == 0:
         print ("\tNo read sampled in {}".format(source.getName()))
-    
+
     else:
         print ("\tWritting {} reads in Fastq file from {}".format(nread, source.getName()))
         filename = basename + ".fastq.gz"
-        
+
         try:
             f = gzip.open(filename, 'a')
             for i in range (nread):
@@ -141,7 +142,7 @@ def write_fastq_single (fastgen, source, nread, basename, qual_scale):
                 # Write the fastq formated read
                 f.write(read.format(qual_scale))
             f.close()
-            
+
         except IOError:
             print('CRITICAL ERROR. {} cannot by open for writing'.format(filename))
             exit
@@ -151,12 +152,12 @@ def write_fastq_pair (fastgen, source, nread, basename, qual_scale):
     """
     if nread == 0:
         print ("\tNo read sampled in {}".format(source.getName()))
-    
+
     else:
         print ("\tWritting {} reads in Fastq files from {}".format( nread, source.getName()))
         filename1 = basename + "_R1.fastq.gz"
         filename2 = basename + "_R2.fastq.gz"
-        
+
         try:
             f1 = gzip.open(filename1, 'a')
             f2 = gzip.open(filename2, 'a')
@@ -171,10 +172,10 @@ def write_fastq_pair (fastgen, source, nread, basename, qual_scale):
                 f2.write(read2.format(qual_scale))
                 # Append the size of sonication frag to the global list
                 FRAG_LEN += read1.annotations["frag_len"]
-                
+
             f1.close()
             f2.close()
-            
+
         except IOError:
             print('CRITICAL ERROR. {} cannot by open for writing'.format(filename))
             exit
@@ -188,35 +189,35 @@ def frag_len_graph (min, max, basename):
     pyplot.ylabel('Relative Count')
     pyplot.xlabel('Size of fragment')
 
-    pyplot.hist(FRAG_LEN, bins = 100, normed=1, facecolor='green', alpha=0.5, align='mid')
+    pyplot.hist(FRAG_LEN, bins=(min-max), range=(min, max), normed=1, facecolor='green', alpha=0.5, align='mid')
 
     # Tweak spacing to prevent clipping of ylabel
     pyplot.subplots_adjust(left=0.15)
-    
+
     fig.savefig(basename+'_distribution.png')
-    
+
 
 
 
 #def write_single_mp (fastgen, source, nread, filename, qual_scale):
 
-    ## Define a queue manager and associate a queue 
+    ## Define a queue manager and associate a queue
     #manager = Manager()
     #queue = manager.Queue()
-           
+
     ## Automatically determine the number of available thread + 1
     #try:
         #nb_thread = cpu_count() + 1
     #except NotImplementedError:
-        #print "cpu_count method is not available on your system" 
+        #print "cpu_count method is not available on your system"
         #nb_thread = 2
-    
+
     ## Define a pool of workers
     #pool = Pool(nb_thread)
 
     ## Put writter to work first
     #writer = pool.apply_async(writer, (basename+".fastq", queue))
-        
+
     ## Start all workers
     #jobs = []
     #print "Done\n"
@@ -234,12 +235,12 @@ def frag_len_graph (min, max, basename):
 
 #def writer(self, filename, q):
     #'''listens for messages on the q, writes to file. '''
-    #f = open(filename, 'w') 
+    #f = open(filename, 'w')
     #while True:
         #read = q.get()
         #if m == 'kill':
             #break
-            
+
         #f.write(read)#.format(self.qual_scale))
         #f.flush()
     #f.close()
