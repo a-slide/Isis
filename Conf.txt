@@ -1,44 +1,64 @@
-# Overall quantity of reads
-read_num	1000
-# Read length
-read_len	150
-# Frequency of mutations in final reads
-mut_freq	0.01
-# Max number of chimeric bases in a given read.
-# Should be around half of the read length for pair end and never more than half for single end
-max_chimeric	75
+#########################################################################################
+#											#
+#	Isis.py configuration file							#
+#	Values can by customized with users values, but the file template must		#
+#	remain unchanged								#
+#	* = Changes of value are not recommended for proper programm execution		#
+#											#
+#########################################################################################
 
+
+[General]
+### General parameters
+# Overall quantity of reads (min = 1, INTEGER)
+read_num : 10000
+# Read length (min = 1, INTEGER)
+read_len : 150 
+# Frequency of mutations in final reads (min = 0, max = 1, FLOAT)
+mut_freq : 0.01
+# Allow sampling in repeat regions identified by lowercase characters (BOOLEAN)
+repeats : False
+# Allow sampling in ambigous IUPAC DNA bases (BOOLEAN)
+ambiguous : False
+
+
+[Frequency]
 ### Relative frequencies of DNA source in fastq (sum of frequencies should be equal to 1)
-# Host genome frequency
-freq_hg	0.4
-# Virus genome frequency
-freq_vg	0.35
-# True junctions frequency
-freq_tj	0.1
-# False junctions frequency
-freq_fj	0.01
+# Host genome frequency (min = 0, max = 1, FLOAT)
+freq_host : 0.4
+# Virus genome frequency (min = 0, max = 1, FLOAT)
+freq_virus : 0.35
+# True junctions frequency (min = 0, max = 1, FLOAT)
+freq_tjun : 0.2
+# False junctions frequency (min = 0, max = 1, FLOAT)
+freq_fjun : 0.05
 
-# Mean number of sampling in true junctions and false junction (should be 1 for false junctions)
-samp_tj	10
-samp_fj	1
 
-## Allow or forbid sampling in repeat regions (lowercase characters), ambigous DNA (Ambigous IUPAC code) and duplicated reads.
-repeats	False
-ambigous	False
-duplicate	False
+[Junction]
+### Parameters specific to junctions between host and viral DNA
+# Minimal number bases of bases from each references in reads (min = 0, max = read size/2 for se mode, max = read_len for pe mode, INTEGER)
+min_chimeric : 75
+# Mean number of sampling in true junctions (min = 0, max = freq_tj * read_num, FLOAT)
+samp_tjun : 100
+# Mean number of sampling in false junction (min = 0, max = freq_tj * read_num, FLOAT) *
+samp_fjun : 0.1
 
-# Sequencing mode. If single end set "se" else if paired ends set "pe"
-pair_end	True
 
-## Options of fragment sonication distribution to set up if paired end mode
-# Maximal Minimal and mean sonication size max > mode > min
-sonic_max	400
-sonic_min	100
-sonic_mode	200
-# Certainty of the sonication smire: 5 (wide peak) to 50 (thin peak). Recommanded = 10
-sonic_certainty	10
+[Sonication]
+## Parameters of fragment sonication distribution to set up if paired end mode
+# Minimal sonication size (min = read_len + min_chimeric, max = size of reference sequences, INTEGER)
+sonic_min : 225
+# Minimal sonication size (min = sonic_min, max = size of reference sequences, INTEGER)
+sonic_mode : 300
+# Minimal sonication size (min = sonic_min, max = size of reference sequences, INTEGER)
+sonic_max : 700
+# Certainty of the sonication smire (min = 5 (wide peak), max =  50 (thin peak), INTEGER) *
+sonic_certainty : 10
 
-# Quality score scale of fastq output file = solexa (CASAVA < 1.3), illumina (CASAVA 1.3 to 1.7), sanger (CASAVA >= 1.8)
-qual_scale	sanger
-# Quality range for mean Phred scores = very_good, good, medium, bad, very_bad
-qual_range	good
+
+[Quality]
+# Quality score scale of fastq output file (fastq-sanger OR fastq-solexa OR fastq-illumina) *
+qual_scale : fastq-sanger
+# Quality range for mean Phred scores (very-good OR good OR medium OR bad OR very-bad) *
+qual_range : good
+

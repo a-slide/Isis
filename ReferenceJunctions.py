@@ -64,7 +64,7 @@ class ReferenceJunctions(object):
         if  size < 2 * self.min_chimeric:
             raise Exception ("ERROR. The size of the slice is too short to define a fragment\n\
             with the require minimal number of chimeric bases in each reference sequence.\n\
-            Review your siez of min chimeric base or read length")
+            Review your size of min chimeric base or read length")
         if size > self.half_len:
             raise Exception ("ERROR. The size of the slice is longer than the reference.\n\
             Review your maximal sonication size or the size of junctions")

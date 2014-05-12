@@ -31,15 +31,20 @@ FRAG_LEN = []
 def main ():
     """main function"""
 
-    pair = True
+    #try:
+        #fasta_filelist_import()
+    #except IsisConfException as E:
+        #print (E)
+        #exit (1)
 
+    pair = True
     basename = "test"
     path_vg = "../datasets/Bacterial_backbone.fa"
     path_hg = "../datasets/Helper_plasmid.fa"
-    nread_vg = 200
-    nread_hg = 100
-    nread_tj = 1500
-    nread_fj = 1000
+    nread_vg = 2000
+    nread_hg = 1000
+    nread_tj = 15000
+    nread_fj = 10000
     sonic_min = 300
     sonic_mode = 350
     sonic_max = 700
@@ -52,10 +57,8 @@ def main ():
     quality_scale = "fastq-sanger"
     min_chimeric = 50
     size_junction = sonic_max if pair else read_len
-
-    n_tj = 15
-    n_fj = 1000
-
+    n_tj = 150
+    n_fj = 10000
 
     # Import reference genomes and create Reference Junctions
     virus = ReferenceGenome ("virus", path_vg)
@@ -171,7 +174,7 @@ def write_fastq_pair (fastgen, source, nread, basename, qual_scale):
                 f1.write(read1.format(qual_scale))
                 f2.write(read2.format(qual_scale))
                 # Append the size of sonication frag to the global list
-                FRAG_LEN += read1.annotations["frag_len"]
+                FRAG_LEN.append(read1.annotations["frag_len"])
 
             f1.close()
             f2.close()
@@ -189,7 +192,7 @@ def frag_len_graph (min, max, basename):
     pyplot.ylabel('Relative Count')
     pyplot.xlabel('Size of fragment')
 
-    pyplot.hist(FRAG_LEN, bins=(min-max), range=(min, max), normed=1, facecolor='green', alpha=0.5, align='mid')
+    pyplot.hist(FRAG_LEN, bins=(max-min)/5, range=(min,max), normed=0, facecolor='green', alpha=0.5, align='mid')
 
     # Tweak spacing to prevent clipping of ylabel
     pyplot.subplots_adjust(left=0.15)
