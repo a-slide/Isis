@@ -1,0 +1,59 @@
+#########################################################################################
+#											#
+#	Isis.py configuration file							#
+#	Values can by customized with users values, but the file template must		#
+#	remain unchanged								#
+#	* = Changes of value are not recommended for proper programm execution		#
+#											#
+#########################################################################################
+
+[General]
+### General parameters
+# Overall quantity of reads (min = 1, INTEGER)
+read_num : 100000
+# Read length (min = 1, INTEGER)
+read_len : 150
+# Frequency of mutations in final reads (min = 0, max = 1, FLOAT)
+mut_freq : 0.01
+# Allow sampling in repeat regions identified by lowercase characters (BOOLEAN)
+repeats : True
+# Allow sampling in ambigous IUPAC DNA bases (BOOLEAN)
+ambiguous : False
+
+[Frequency]
+### Relative frequencies of DNA source in fastq (sum of frequencies should be equal to 1)
+# Host genome frequency (min = 0, max = 1, FLOAT)
+freq_host : 0.49
+# Virus genome frequency (min = 0, max = 1, FLOAT)
+freq_virus : 0.49
+# True junctions frequency (min = 0, max = 1, FLOAT)
+freq_tjun : 0.01
+# False junctions frequency (min = 0, max = 1, FLOAT)
+freq_fjun : 0.01
+
+[Junction]
+### Parameters specific to junctions between host and viral DNA
+# Minimal number bases of bases from each references in reads (min = 0, max = read size/2 for se mode, max = read_len for pe mode, INTEGER)
+min_chimeric : 25
+# Mean number of sampling in true junctions (min = 0, max = freq_tj * read_num, FLOAT)
+samp_tjun : 20
+# Mean number of sampling in false junction (min = 0, max = freq_tj * read_num, FLOAT) *
+samp_fjun : 0.1
+
+[Sonication]
+## Parameters of fragment sonication distribution to set up if paired end mode
+# Minimal sonication size (min = read_len + min_chimeric, max = size of reference sequences, INTEGER)
+sonic_min : 200
+# Minimal sonication size (min = sonic_min, max = size of reference sequences, INTEGER)
+sonic_mode : 400
+# Minimal sonication size (min = sonic_min, max = size of reference sequences, INTEGER)
+sonic_max : 1000
+# Certainty of the sonication smire (min = 5 (wide peak), max =  50 (thin peak), INTEGER) *
+sonic_certainty : 8
+
+[Quality]
+# Quality score scale of fastq output file (fastq-sanger OR fastq-solexa OR fastq-illumina) *
+qual_scale : fastq-sanger
+# Quality range for mean Phred scores (very-good OR good OR medium OR bad OR very-bad) *
+qual_range : good
+
