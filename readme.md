@@ -1,4 +1,4 @@
-# Isis (Insertion Site 
+# Isis (Insertion SIte Sampler)
 
 ## Motivation
 
