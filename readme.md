@@ -1,4 +1,4 @@
-** TRACE A GRAPH OF READ POSITION OVER TRUE JUNCTIONS use location parameters ...... **
+* TRACE A GRAPH OF READ POSITION OVER TRUE JUNCTIONS use location parameters un seQreccord...... *
 
 # Isis (Insertion Site Sampler)
 
