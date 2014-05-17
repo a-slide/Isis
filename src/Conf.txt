@@ -10,7 +10,7 @@
 [General]
 ### General parameters
 # Overall quantity of reads (min = 1, INTEGER)
-read_num : 100000
+read_num : 10000
 # Read length (min = 1, INTEGER)
 read_len : 150
 # Frequency of mutations in final reads (min = 0, max = 1, FLOAT)

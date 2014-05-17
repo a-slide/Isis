@@ -109,7 +109,10 @@ def main ():
     # Write sampling reports
     for ref, nread in ref_list:
         ref.write_samp_report()
-
+    
+    # Write true junction fasta file
+    tjun.write_fasta()
+    
     print "DONE"
     exit (1)
 
@@ -167,6 +170,7 @@ def write_fastq_pair (fastgen, source, nread, basename, qual_scale):
         try:
             f1 = gzip.open(filename1, 'a')
             f2 = gzip.open(filename2, 'a')
+            
             for i in range (nread):
                 # Ask a pair of read to the source throught fastgen
                 read1, read2 = fastgen.generate_fastq(source)
@@ -185,6 +189,52 @@ def write_fastq_pair (fastgen, source, nread, basename, qual_scale):
         except IOError:
             print('CRITICAL ERROR. {} cannot by open for writing'.format(filename))
             exit
+
+#def write_fastq_sam_pair (fastgen, source, nread, basename, qual_scale):
+    #"""
+    #"""
+    #if nread == 0:
+        #print ("\tNo read sampled in {}".format(source.getName()))
+
+    #else:
+        #print ("\tWritting {} reads in Fastq files from {}".format( nread, source.getName()))
+        #filename1 = basename + "_R1.fastq.gz"
+        #filename2 = basename + "_R2.fastq.gz"
+        #filename3 = basename + ".sam"
+
+        #try:
+            #f1 = gzip.open(filename1, 'a')
+            #f2 = gzip.open(filename2, 'a')
+            #f3 = open(filename2, 'a')
+            
+            #for i in range (nread):
+                ## Ask a pair of read to the source throught fastgen
+                #read1, read2 = fastgen.generate_fastq(source)
+                ## Uniq read identifier
+                #read1.id += "|#{:010}".format(i)
+                #read2.id += "|#{:010}".format(i)
+                ## Write the fastq formated reads
+                #f1.write(read1.format(qual_scale))
+                #f2.write(read2.format(qual_scale))
+                
+                #f3.write("{0}\t{1}\t{2}\t{3}\t{4}\t{5}\t{6}\t{7}\t{8}\n".format(
+                    #read1.id,
+                    
+                
+                
+                
+                ## Append the size of sonication frag to the global list
+                #FRAG_LEN.append(read1.annotations["frag_len"])
+                #if sam:
+                    
+
+            #f1.close()
+            #f2.close()
+            #f3.close()
+
+        #except IOError:
+            #print('CRITICAL ERROR. {} cannot by open for writing'.format(filename))
+            #exit
 
 def frag_len_graph (min, max, basename):
     """ Output a graphical representation of the fragment len

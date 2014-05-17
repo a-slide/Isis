@@ -212,7 +212,7 @@ class SlicePickerPair(SlicePicker):
                 exit (0)
 
             # Extract pair reads from slice
-            read1, read2 = self._extract_pair(fragment, self.read_len, frag_len, source)
+            read1, read2 = self._extract_pair(fragment, source)
 
             # Verify the validity of the candidate sequence
             if self._valid_sequence(str(read1.seq)) and self._valid_sequence(str(read2.seq)):
@@ -238,39 +238,60 @@ class SlicePickerPair(SlicePicker):
         """
         return int(betavariate(self.alpha, self.beta) * (self.sonic_max - self.sonic_min) + self.sonic_min)
 
-    def _extract_pair(self, fragment, read_len, frag_len, source):
+    def _extract_pair(self, fragment, source):
         """Extract reads forward and reverse from a fragment sequence
         and return a list with name, and both records
         """
         # Extract forward and reverse reads
-        forward = fragment[:read_len]
-        reverse = fragment[-read_len:].reverse_complement()
+        forward = fragment[:self.read_len]
+        reverse = fragment[-self.read_len:].reverse_complement()
         
         # Add information to SeqReccord
-        forward.annotations = {
-            "refseq" : fragment.annotations["refseq"],
-            "location" : fragment.annotations["location"],
-            "read" : "R1",
-            "frag_len" : frag_len,
-            "ref" : source,
-            "pair_overlap" : self._pair_overlap(read_len, frag_len)}
-        reverse.annotations = {
-            "refseq" : fragment.annotations["refseq"],
-            "location" : fragment.annotations["location"],
-            "read" : "R2",
-            "frag_len" : frag_len,
-            "ref" : source,
-            "pair_overlap" : self._pair_overlap(read_len, frag_len)}
-        
-        # Postfix names of reads with R1 or R2
-        forward.id = "{}|R1".format(fragment.id)
-        reverse.id = "{}|R2".format(fragment.id)
+        forward.annotations = self._annotate_read (fragment, source, "R1")
+        reverse.annotations = self._annotate_read (fragment, source, "R2")
+               
+        # Postfix names of reads with R1 or R2 + reset name and dscr
+        forward.id = reverse.id = fragment.id
         forward.name = reverse.name = forward.description = reverse.description = ""
         
         return(forward, reverse)
 
-    def _pair_overlap(self,read_len, frag_len):
-        """Simple fonction returning a string the overlap between the 2
-        mates of a read
+    def _annotate_read (self, fragment, source, mate):
+        """Extract annotations for each of the reads from a pair
         """
-        return 0 if frag_len > 2*read_len else 2*read_len - frag_len
+        # Define shortcuts
+        f_start = fragment.annotations["location"][0]
+        f_end = fragment.annotations["location"][1]
+        f_len = len(fragment.seq)
+        r_len = self.read_len
+        
+        # Empty dict
+        d = {}
+        
+        # Specific filling according the mate and fragment orientation
+        if mate == "R1":
+            d["mate"] = "R1"
+            if fragment.annotations["orientation"] == "+":
+                d["location"] = [f_start, f_start + r_len]
+                d["orientation"] = "+"
+            else:
+                d["location"] = [f_end - r_len, f_end]
+                d["orientation"] = "-"
+        
+        elif mate == "R2":
+            d["mate"] = "R"
+            if fragment.annotations["orientation"] == "+":
+                d["location"] = [f_end - r_len, f_end]
+                d["orientation"] = "-"
+            else:
+                d["location"] = [f_start, f_start + r_len]
+                d["orientation"] = "+"
+        
+        # Generic filling
+        d["refseq"] = fragment.annotations["refseq"]
+        d["frag_len"] = f_len
+        d["ref"] = source
+        d["pair_overlap"] = 0 if f_len > 2*r_len else 2*r_len - f_len
+        
+        return d 
+

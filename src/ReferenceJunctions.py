@@ -84,16 +84,18 @@ class ReferenceJunctions(object):
         """ Create a simple csv report 
         """
         # Open a file for writting with python csv module
-        with open(self.name+"_samp_report.csv", 'w') as csvfile:
+        with open(self.name+"_report.csv", 'w') as csvfile:
             writer = csv.writer(csvfile, delimiter='\t', quoting=csv.QUOTE_NONE)
             writer.writerow([
                 "junction_id",
                 "ref1_source",
                 "ref1_chr",
                 "ref1_loc",
+                "ref1_orientation",
                 "ref2_source",
                 "ref2_chr",
                 "ref2_loc",
+                "ref2_orientation",
                 "nb_samp"])
             
             # Create a sorted list of refseq
@@ -107,10 +109,25 @@ class ReferenceJunctions(object):
                 self.d[ref].annotations["ref1"].getName(),
                 self.d[ref].annotations["ref1_refseq"],
                 self.d[ref].annotations["ref1_location"],
+                self.d[ref].annotations["ref1_orientation"],
                 self.d[ref].annotations["ref2"].getName(),
                 self.d[ref].annotations["ref2_refseq"],
                 self.d[ref].annotations["ref2_location"],
+                self.d[ref].annotations["ref2_orientation"],
                 self.d[ref].annotations["nb_samp"]])
+
+    def write_fasta (self):
+        """ Create a fasta file containing all reference sequence in d 
+        """
+        # Open a file for writting with python csv module
+        with open(self.name+".fa", 'w') as f:
+            # Create a sorted list of refseq
+            ref_list = self.d.keys()
+            ref_list.sort()
+            
+            # Export each refseq characteristics in a file
+            for ref in ref_list:
+                f.write(self.d[ref].format("fasta"))
 
 ###    PRIVATE METHODS    ###
 
@@ -144,7 +161,9 @@ class ReferenceJunctions(object):
                 "ref1_refseq" : s1.annotations["refseq"],
                 "ref2_refseq" : s2.annotations["refseq"],
                 "ref1_location" : s1.annotations["location"],
-                "ref2_location" : s2.annotations["location"]}
+                "ref2_location" : s2.annotations["location"],
+                "ref1_orientation" : s1.annotations["orientation"],
+                "ref2_orientation" : s2.annotations["orientation"]}
             
             junctions_dict[junction.id] = junction
 
@@ -161,24 +180,25 @@ class ReferenceJunctions(object):
         # a slice
         if randint(0,1):
             s = self.d[refseq][start:end]
-            s.annotations["location"] = [start, end]
+            s.annotations["orientation"] = "+"
         else:
             s = self.d[refseq][start:end].reverse_complement()
-            s.annotations["location"] = [end, start]
+            s.annotations["orientation"] = "-"
         
         # Add informations to the annotations dictionnary
         s.annotations["refseq"] = refseq
+        s.annotations["location"] = [start, end]
         
-        # Undefine description and define id and name  
+        # Undefine description and define id and name 
         s.name = s.description = ""
-        s.id = "{}|{}:{}-{}".format(
+        s.id = "{}|{}:{}-{}({})".format(
             self.name,
             s.annotations["refseq"],
             s.annotations["location"][0],
-            s.annotations["location"][1])
+            s.annotations["location"][1],
+            s.annotations["orientation"])
         
         # Increment the sampling counter of the refseq
         self.d[refseq].annotations["nb_samp"] += 1
 
         return s
-

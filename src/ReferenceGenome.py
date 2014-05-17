@@ -94,7 +94,7 @@ class ReferenceGenome(object):
         """ Create a simple csv report 
         """
         # Open a file for writting with python csv module
-        with open(self.name+"_samp_report.csv", 'w') as csvfile:
+        with open(self.name+"_report.csv", 'w') as csvfile:
             writer = csv.writer(csvfile, delimiter='\t', quoting=csv.QUOTE_NONE)
             writer.writerow(["chr", "lenght", "nb_samp"])
             
@@ -167,21 +167,23 @@ class ReferenceGenome(object):
         # a slice
         if randint(0,1):
             s = self.d[refseq][start:end]
-            s.annotations["location"] = [start, end]
+            s.annotations["orientation"] = "+"
         else:
             s = self.d[refseq][start:end].reverse_complement()
-            s.annotations["location"] = [end, start]
+            s.annotations["orientation"] = "-"
         
         # Add informations to the annotations dictionnary
         s.annotations["refseq"] = refseq
+        s.annotations["location"] = [start, end]
         
         # Undefine description and define id and name 
         s.name = s.description = ""
-        s.id = "{}|{}:{}-{}".format(
+        s.id = "{}|{}:{}-{}({})".format(
             self.name,
             s.annotations["refseq"],
             s.annotations["location"][0],
-            s.annotations["location"][1])
+            s.annotations["location"][1],
+            s.annotations["orientation"])
         
         # Increment the sampling counter of the refseq
         self.d[refseq].annotations["nb_samp"] += 1
