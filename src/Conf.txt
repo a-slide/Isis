@@ -19,6 +19,11 @@ mut_freq : 0.01
 repeats : True
 # Allow sampling in ambigous IUPAC DNA bases (BOOLEAN)
 ambiguous : False
+# Generate graphical output du visualize coverage over junctions and distibution of fragment size if pair mode
+graph = True
+# Generate a sampling report for each reference (ie. number of time where a read was randomly sampled)
+report = True
+
 
 [Frequency]
 ### Relative frequencies of DNA source in fastq (sum of frequencies should be equal to 1)

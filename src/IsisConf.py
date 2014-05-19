@@ -55,6 +55,8 @@ class IsisConf(object):
         self.d.update (self._get_float("General", "mut_freq", 0, 1))
         self.d.update (self._get_bool("General", "repeats"))
         self.d.update (self._get_bool("General", "ambiguous"))
+        self.d.update (self._get_bool("General", "graph"))
+        self.d.update (self._get_bool("General", "report"))
 
         ## FREQUENCY SECTION ##
         freq_host = self._get_float ("Frequency", "freq_host", 0, 1).values()[0]
