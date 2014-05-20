@@ -42,6 +42,9 @@ The programm was developed under Linux Mint 16 "petra" but is compatible with ot
 * python 2.7 +
 * Biopython
 
+## Logbook (french)
+
+* [Logbook](http://nbviewer.ipython.org/github/a-slide/Isis/blob/master/doc/Logbook.ipynb)
 
 ## Authors and Contact
 Adrien Leger @a-slide
