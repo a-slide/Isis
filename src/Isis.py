@@ -1,8 +1,26 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+#
+#  Isis.py v0.01
+#
+#  Copyright 2014 adrien <adrien.leger@gmail.com>
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  You should have received a copy of the GNU General Public License
+#  along with this program; if not, write to the Free Software
+#  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+#  MA 02110-1301, USA.
 
 # Standard library packages
-from multiprocessing import Pool, Manager, cpu_count
 import gzip
 
 # Third party package
@@ -231,55 +249,7 @@ def write_report (source_list):
     for source in source_list:
         source.write_samp_report()
 
-
-#def write_single_mp (fastgen, source, nread, filename, qual_scale):
-
-    ## Define a queue manager and associate a queue
-    #manager = Manager()
-    #queue = manager.Queue()
-
-    ## Automatically determine the number of available thread + 1
-    #try:
-        #nb_thread = cpu_count() + 1
-    #except NotImplementedError:
-        #print "cpu_count method is not available on your system"
-        #nb_thread = 2
-
-    ## Define a pool of workers
-    #pool = Pool(nb_thread)
-
-    ## Put writter to work first
-    #writer = pool.apply_async(writer, (basename+".fastq", queue))
-
-    ## Start all workers
-    #jobs = []
-    #print "Done\n"
-    #for i in range(nread):
-        #job = pool.apply_async(self.worker, (i, queue))
-        #jobs.append(job)
-
-#def worker(self, i,queue):
-    ## Ask a fastq to generate_fastq
-    ##read = self.generate_fastq(source)
-    ## Add Uniq read identifier
-    ##read.id += "|#{:010}".format(i)
-    ## Add the read to the queue
-    #queue.put(i)
-
-#def writer(self, filename, q):
-    #'''listens for messages on the q, writes to file. '''
-    #f = open(filename, 'w')
-    #while True:
-        #read = q.get()
-        #if m == 'kill':
-            #break
-
-        #f.write(read)#.format(self.qual_scale))
-        #f.flush()
-    #f.close()
-
-
-########################################################################################################################
+################################################################################
 
 if __name__ == '__main__':
     main()
