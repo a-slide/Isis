@@ -8,12 +8,12 @@ from Bio.Alphabet.IUPAC import IUPACUnambiguousDNA as Unambiguous
 ####################################################################################################
 
 class SlicePicker(object):
-    """Base class for SlicePickerSingle and SlicePickerPair 
+    """Base class for SlicePickerSingle and SlicePickerPair
     """
 ####################################################################################################
-    
+
 #####    FONDAMENTAL METHODS    #####
-    
+
     def __init__(self, read_len, repeats, ambiguous, mut_freq=0):
         """Initialize the class with generic variables
         """
@@ -25,8 +25,6 @@ class SlicePicker(object):
         self.read_len = read_len
 
     def __repr__(self):
-        """Long representation"""
-        
         descr = "{}\n".format(self.__str__())
         descr += "Read Lenght {}\n".format(self.read_len)
         descr += "Alphabet {}\n".format(self.alphabet)
@@ -34,24 +32,23 @@ class SlicePicker(object):
         return descr
 
     def __str__(self):
-        """Short representation"""
-        return "<Instance of " + self.__module__ + ">"
-    
+        return "<Instance of {} from {} >".format(self.__class__.__name__, self.__module__)
+
 #####    GETTERS    #####
-    
+
     def get_mut_freq (self):
         return self.mut_freq
-    
+
     def get_alphabet (self):
         return self.alphabet
-        
+
     def get_read_len (self):
         return self.read_len
-    
+
 #####    PRIVATE METHODS    #####
-    
+
     def _IUPAC_alphabet(self, repeats, ambiguous):
-        """ Define an DNA letters alphabet according to the user 
+        """ Define an DNA letters alphabet according to the user
         specifications (allow repeats, allow ambiguous)
         """
         alphabet = Ambiguous.letters if ambiguous else Unambiguous.letters
@@ -59,17 +56,17 @@ class SlicePicker(object):
         return alphabet
 
     def _valid_sequence(self, seq):
-        """ Verify if the users sequence 
+        """ Verify if the users sequence
         """
         return all([(base in self.alphabet) for base in seq])
 
     def _mutate_sequence(self, read):
         """Introduce mutations in a biopython record"""
-        
+
         read.annotations ["Mutations"] = []
-        
+
         if self.mut_freq != 0:
-            
+
             # Change Seq to mutable object
             seq = read.seq.tomutable()
 
@@ -78,7 +75,7 @@ class SlicePicker(object):
                     original_base = seq[i]
                     seq[i] = self._mutate_base(seq[i])
                     read.annotations ["Mutations"].append("Pos {} {} -> {}".format(i+1, original_base, seq[i]))
-            
+
             # Change back to non-mutable object
             read.seq = seq.toseq()
 
@@ -94,7 +91,7 @@ class SlicePickerSingle(SlicePicker):
     """For single read sampling
     """
 ####################################################################################################
-    
+
 #####    FONDAMENTAL METHODS    #####
 
     # Use base class __init__, __repr__ and __str__ methods
@@ -102,8 +99,8 @@ class SlicePickerSingle(SlicePicker):
 #####    ACTION METHODS    #####
 
     def pick_slice(self, source):
-        """Generate a candidate read. The presence or absence of repeats 
-        and ambiguous DNA bases can be checked and a given frequency of 
+        """Generate a candidate read. The presence or absence of repeats
+        and ambiguous DNA bases can be checked and a given frequency of
         bases can be randomly mutated
         """
         # Guard condition if not possible to find a valid pair after 100 tries
@@ -114,12 +111,10 @@ class SlicePickerSingle(SlicePicker):
             except Exception as e:
                 print e
                 exit (0)
-            
-            # Link to the source reference object
-            read.annotations ["ref"] = source
-                
+
             # Verify the validity of the candidate sequence
             if self._valid_sequence(str(read.seq)):
+                read.annotations["frag_len"] = len(read.seq)
                 return self._mutate_sequence(read)
 
         # If no candidate sequence was found an Exception is raised
@@ -132,9 +127,9 @@ class SlicePickerPair(SlicePicker):
     """For paired read sampling
     """
 ####################################################################################################
-    
+
 #####    FONDAMENTAL METHODS    #####
-    
+
     def __init__(self, read_len, sonic_min, sonic_mode, sonic_max, sonic_certainty, repeats,
                  ambiguous, mut_freq):
         """Surdefine the super class init by adding sonication
@@ -142,17 +137,17 @@ class SlicePickerPair(SlicePicker):
         """
         # Use the super class init method
         super(self.__class__, self).__init__(read_len, repeats, ambiguous, mut_freq)
-        
+
         if not read_len <= sonic_min <= sonic_mode <= sonic_max:
             raise Exception("Wrong sonication parameters")
-        
+
         # Store read length and sonication parameters
         self.sonic_min = sonic_min
         self.sonic_max = sonic_max
         self.sonic_mode = sonic_mode
         self.sonic_certainty = sonic_certainty
         self.alpha, self.beta = self._beta_shape()
-    
+
     def __repr__(self):
         """Long representation
         """
@@ -165,33 +160,28 @@ class SlicePickerPair(SlicePicker):
         descr += "beta {}\n".format(self.beta)
         return descr
 
-    def __str__(self):
-        """Short representation
-        """
-        return "<Instance of " + self.__module__ + ">\n"
-    
 #####    GETTERS    #####
-    
+
     def get_sonic_min (self):
         return self.sonic_min
-    
+
     def get_sonic_mode (self):
         return self.sonic_mode
-        
+
     def get_sonic_max (self):
         return self.sonic_max
-        
+
     def get_sonic_certainty (self):
         return self.sonic_certainty
-    
+
     def get_alpha (self):
         return self.alpha
-    
+
     def get_beta (self):
         return self.beta
-    
+
 #####    ACTION METHODS    #####
-    
+
     def pick_slice(self, source):
         """Generate a candidate read pair from a fragment of a length
         following a distribution mimicking sonication smire. The
@@ -245,18 +235,18 @@ class SlicePickerPair(SlicePicker):
         # Extract forward and reverse reads
         forward = fragment[:self.read_len]
         reverse = fragment[-self.read_len:].reverse_complement()
-        
+
         # Add information to SeqReccord
-        forward.annotations = self._annotate_read (fragment, source, "R1")
-        reverse.annotations = self._annotate_read (fragment, source, "R2")
-               
+        forward.annotations = self._annotate_read (fragment, "R1")
+        reverse.annotations = self._annotate_read (fragment, "R2")
+
         # Postfix names of reads with R1 or R2 + reset name and dscr
         forward.id = reverse.id = fragment.id
         forward.name = reverse.name = forward.description = reverse.description = ""
-        
+
         return(forward, reverse)
 
-    def _annotate_read (self, fragment, source, mate):
+    def _annotate_read (self, fragment, mate):
         """Extract annotations for each of the reads from a pair
         """
         # Define shortcuts
@@ -264,10 +254,10 @@ class SlicePickerPair(SlicePicker):
         f_end = fragment.annotations["location"][1]
         f_len = len(fragment.seq)
         r_len = self.read_len
-        
+
         # Empty dict
         d = {}
-        
+
         # Specific filling according the mate and fragment orientation
         if mate == "R1":
             d["mate"] = "R1"
@@ -277,21 +267,21 @@ class SlicePickerPair(SlicePicker):
             else:
                 d["location"] = [f_end - r_len, f_end]
                 d["orientation"] = "-"
-        
+
         elif mate == "R2":
-            d["mate"] = "R"
+            d["mate"] = "R2"
             if fragment.annotations["orientation"] == "+":
                 d["location"] = [f_end - r_len, f_end]
                 d["orientation"] = "-"
             else:
                 d["location"] = [f_start, f_start + r_len]
                 d["orientation"] = "+"
-        
+
         # Generic filling
         d["refseq"] = fragment.annotations["refseq"]
         d["frag_len"] = f_len
-        d["ref"] = source
+        d["source"] = fragment.annotations["source"]
         d["pair_overlap"] = 0 if f_len > 2*r_len else 2*r_len - f_len
-        
-        return d 
+
+        return d
 

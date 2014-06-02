@@ -1,24 +1,14 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-#
-#  Isis.py v0.01
-#
-#  Copyright 2014 adrien <adrien.leger@gmail.com>
-#
-#  This program is free software; you can redistribute it and/or modify
-#  it under the terms of the GNU General Public License as published by
-#  the Free Software Foundation; either version 2 of the License, or
-#  (at your option) any later version.
-#
-#  This program is distributed in the hope that it will be useful,
-#  but WITHOUT ANY WARRANTY; without even the implied warranty of
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#  GNU General Public License for more details.
-#
-#  You should have received a copy of the GNU General Public License
-#  along with this program; if not, write to the Free Software
-#  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
-#  MA 02110-1301, USA.
+
+"""
+@package    Isis
+@brief      Main package of Isis program. Contains functions to call sequence generation and write fastq in file
+@copyright  [GNU General Public License v2](http://www.gnu.org/licenses/gpl-2.0.html)
+@author     Adrien Leger <adrien.leger@gmail.com>
+"""
+
+#~~~~~~~GLOBAL IMPORTS~~~~~~~#
 
 # Standard library packages
 import gzip
@@ -34,14 +24,14 @@ from SlicePicker import SlicePickerSingle, SlicePickerPair
 from QualGenerator import QualGenerator
 from FastqGenerator import FastqGeneratorSingle, FastqGeneratorPair
 
-##### Global Variables #####
+#~~~~~~~GLOBAL VARIABLES~~~~~~~#
 
 # Store lenght of fragment for pair end sonication profile graphical output
 FRAG_LEN = []
 # Store read coverage of over junctions
 JUN_COV = []
 
-#####    MAIN   #####
+#~~~~~~~MAIN~~~~~~~#
 
 def main ():
     """main function"""
@@ -129,7 +119,7 @@ def main ():
     print "DONE"
     exit (1)
 
-#####    FUNCTIONS   #####
+#~~~~~~~FUNCTIONS~~~~~~~#
 
 def write_fastq_single (fastgen, source_list, basename, qual_scale):
     """ Function printing the request number of single end reads per reference
@@ -140,11 +130,13 @@ def write_fastq_single (fastgen, source_list, basename, qual_scale):
 
         for source, nread, graph in source_list:
             print ("\tWritting {} read(s) in Fastq file from {}".format(nread, source.getName()))
+            # Calculate the number of digits in nread for read naming
+            max_len = len(str(nread)
             for i in range (nread):
                 # Ask a read to the source throught fastgen
                 read = fastgen.generate_fastq(source)
-                # Uniq read identifier
-                read.id += "|#{:010}".format(i)
+                # Generate a uniq identifier
+                read.id = generate_id(i, max_len, read.annotations)
                 # Write the fastq formated read
                 f.write(read.format(qual_scale))
                 # if graph is True
@@ -156,7 +148,7 @@ def write_fastq_single (fastgen, source_list, basename, qual_scale):
         print (E)
         exit (0)
 
-def write_fastq_pair (fastgen, source_list, basename, qual_scale):
+def write_fastq_pair (fastgen, source_list, basename, qual_scale, read_len):
     """ Function printing the request number of pair end reads per reference
     in a fastq.gz file
     """
@@ -166,11 +158,13 @@ def write_fastq_pair (fastgen, source_list, basename, qual_scale):
 
         for source, nread, graph in source_list:
             print ("\tWritting {} read(s) in Fastq file from {}".format(nread, source.getName()))
+            # Calculate the number of digits in nread for read naming
+            max_len = len(str(nread)
             for i in range (nread):
                 # Ask a read to the source throught fastgen
                 read1, read2 = fastgen.generate_fastq(source)
                 # Uniq read identifier
-                read1.id += "|#{:010}".format(i)
+                read1.id += "#{0:0{1}}".format(i, max_len)
                 read2.id += "|#{:010}".format(i)
                 # Write the fastq formated read
                 f1.write(read1.format(qual_scale))
@@ -197,6 +191,20 @@ def update_jun_cov (start, end):
 
 def update_frag_len (frag_len):
     FRAG_LEN.append(frag_len)
+
+def generate_id(i,max_len, d):
+    id_string = "{}".format(d["source"].name)
+    id_string += "|#{0:0{1}}".format(i, max_len)
+
+    if (d["source"], RefJun):
+        s1, s2 = d["source"].origin_coord(d["refseq"], d["location"][0], d["location"][1])
+        id_string += "|1|{}|{}".format(s1, s2)
+    else:
+        id_string += "|0|All={}:{}-{}".format(d["refseq"], d["location"][0], d["location"][1])
+
+
+    id_string += "|True" if isinstance(d["source"], RefJun) else "|False"
+
 
 def frag_len_graph (min, max, basename):
     """ Output a graphical representation of the fragment len distribution
@@ -244,12 +252,11 @@ def jun_cov_graph (basename):
     # Export figure to file
     fig.savefig(basename+'_junction_coverage.png')
 
-
 def write_report (source_list):
     for source in source_list:
         source.write_samp_report()
 
-################################################################################
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
 if __name__ == '__main__':
     main()

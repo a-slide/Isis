@@ -21,35 +21,31 @@ class ReferenceGenome(object):
         """Import reference sequences from fasta file and create a list
         of probability to sample in each ref sequence
         """
-        
+
         print "Initialisation of {}...".format(name)
-        
+
         # Store object variables
         self.name = name
-        
+
         # Dictionnary of bioPython record created from fasta file
         self.d = self._import_fasta(filename)
-        
+
         # Initialize a counter for each reference that will be
         # incremented each time _random_slice choose this reference
         self.reset_samp_counter()
-        
+
         # List cummulative probabilities of each sequence to be picked
         # calculated from to their respective size.
         self.proba_list = self._calculate_proba()
-        
+
     def __repr__(self):
-        """Long description string used by interpreter and repr
-        """
         result = "{}\n".format(self.__str__())
         for entry in self.d.values():
             result += "{}\nLenght:{}\n".format(entry, len(entry))
         return result
 
     def __str__(self):
-        """Short representation
-        """
-        return "{} : Instance of {}".format(self.__module__, self.name)
+        return "<Instance of {} from {} >".format(self.__class__.__name__, self.__module__)
 
 ###    GETERS    ###
 
@@ -61,7 +57,7 @@ class ReferenceGenome(object):
 
     def getProba(self):
         return self.proba_list
-    
+
     def getName(self):
         return self.name
 
@@ -74,7 +70,7 @@ class ReferenceGenome(object):
         for count in range(100):
             # Pick a random sequence in dictionnary
             refseq = self._random_refseq()
-            
+
             # If the size is valid return a slice
             if size <= len(self.d[refseq]):
                 return self._random_slice(refseq, size)
@@ -91,28 +87,28 @@ class ReferenceGenome(object):
             record.annotations ["nb_samp"] = 0
 
     def write_samp_report (self):
-        """ Create a simple csv report 
+        """ Create a simple csv report
         """
         # Open a file for writting with python csv module
         with open(self.name+"_report.csv", 'w') as csvfile:
             writer = csv.writer(csvfile, delimiter='\t', quoting=csv.QUOTE_NONE)
             writer.writerow(["chr", "lenght", "nb_samp"])
-            
+
             # Create a sorted list of refseq
             ref_list = self.d.keys()
             ref_list.sort()
-            
+
             # Export each refseq characteristics in a file
             for ref in ref_list:
                 writer.writerow([ref, len(self.d[ref]), self.d[ref].annotations["nb_samp"]])
-            
+
 ###    PRIVATE METHODS    ###
 
     def _import_fasta(self, filename):
         """Import fasta files in a dictionary of biopython SeqRecord
         """
         # Try to open the file fist gz compressed and uncompressed
-        try: 
+        try:
             if filename.rpartition(".")[-1] == "gz":
                 print("\tUncompressing and extracting data")
                 handle = gzip.open(filename, "r")
@@ -122,14 +118,14 @@ class ReferenceGenome(object):
 
             d = SeqIO.to_dict(SeqIO.parse(handle, "fasta"))
             handle.close()
-            
+
             return d
-            
+
         # Try to open the file fist gz compressed and uncompressed
         except IOError:
                print('CRITICAL ERROR. The fasta file ' + filename + ' is not readable. Exit')
                exit
-    
+
     def _calculate_proba(self):
         """Return a 2 entries list with the name of the sequence and a
         cumulative frequency of the sequence
@@ -163,7 +159,7 @@ class ReferenceGenome(object):
         start = randint(0, len(self.d[refseq])-size)
         end = start+size
 
-        # Randomly choose an orientation reverse or forward and sample 
+        # Randomly choose an orientation reverse or forward and sample
         # a slice
         if randint(0,1):
             s = self.d[refseq][start:end]
@@ -171,21 +167,16 @@ class ReferenceGenome(object):
         else:
             s = self.d[refseq][start:end].reverse_complement()
             s.annotations["orientation"] = "-"
-        
+
         # Add informations to the annotations dictionnary
         s.annotations["refseq"] = refseq
         s.annotations["location"] = [start, end]
-        
-        # Undefine description and define id and name 
-        s.name = s.description = ""
-        s.id = "{}|{}:{}-{}({})".format(
-            self.name,
-            s.annotations["refseq"],
-            s.annotations["location"][0],
-            s.annotations["location"][1],
-            s.annotations["orientation"])
-        
+        s.annotations["source"] = self
+
+        # Undefine description, id and name
+        s.name = s.description = s.id = ""
+
         # Increment the sampling counter of the refseq
         self.d[refseq].annotations["nb_samp"] += 1
-        
+
         return s

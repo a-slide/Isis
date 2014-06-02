@@ -32,17 +32,13 @@ class ReferenceJunctions(object):
         self.reset_samp_counter()
 
     def __repr__(self):
-        """Long description string used by interpreter and repr
-        """
         result = "{}\n".format(self.__str__())
         for entry in self.d.values():
             result += "{}\nLenght:{}\n".format(entry, len(entry))
         return result
 
     def __str__(self):
-        """Short representation
-        """
-        return "{} : Instance of {}".format(self.name, self.__module__)
+        return "<Instance of {} from {} >".format(self.__class__.__name__, self.__module__)
 
 ###    GETERS    ###
 
@@ -108,17 +104,57 @@ class ReferenceJunctions(object):
             for ref in ref_list:
                 writer.writerow([
                 ref,
-                self.d[ref].annotations["ref1"].getName(),
+                self.d[ref].annotations["ref1_source"].getName(),
                 self.d[ref].annotations["ref1_refseq"],
                 self.d[ref].annotations["ref1_location"],
                 self.d[ref].annotations["ref1_orientation"],
-                self.d[ref].annotations["ref2"].getName(),
+                self.d[ref].annotations["ref2_source"].getName(),
                 self.d[ref].annotations["ref2_refseq"],
                 self.d[ref].annotations["ref2_location"],
                 self.d[ref].annotations["ref2_orientation"],
                 self.d[ref].annotations["nb_samp"],
                 self.d[ref].seq[ :self.half_len],
                 self.d[ref].seq[self.half_len+1: ]])
+
+    def origin_coord (self, refseq, start, end):
+        """ Return a string describing the the origin of a sequence from a
+        junction of the dictionnary
+        """
+        # If the give coord overlap only the left reference of a junction
+        if start <= end <= self.half_len:
+            return ("{}-{}={}".format(
+            1, end-start,
+            self.coord_to_str(self.d[refseq].annotations, "ref1", start, end)))
+
+        # If the give coord overlap only the right reference of a junction
+        elif self.half_len <= start <= end:
+            return ("{}-{}={}".format(
+            1,end-start,
+            self.coord_to_str(self.d[refseq].annotations, "ref2", start-self.half_len, end-self.half_len)))
+
+        # If the give coord overlap both references of a junction
+        else :
+            return ("{}-{}={}|{}-{}={}".format(
+            1,self.half_len-start,
+            self.coord_to_str(self.d[refseq].annotations, "ref1", start, self.half_len-1),
+            self.half_len-start+1, end-start,
+            self.coord_to_str(self.d[refseq].annotations, "ref2", self.half_len, end)))
+
+    def coord_to_str (self, d, ref, start, end, ):
+        """
+        """
+        ref_id = d[ref+"_refseq"].id
+
+        if d[ref+"_orientation"] == '+':
+            ref_start = d[ref+"_location"][0] + start
+            ref_end = d[ref+"_location"][0] + end
+
+        else:
+            ref_start = d[ref+"_location"][1] - end
+            ref_end = d[ref+"_location"][1] - start
+
+        return ("{}:{}-{}".format(ref_id, ref_start, ref_end))
+
 
 ###    PRIVATE METHODS    ###
 
@@ -131,6 +167,9 @@ class ReferenceJunctions(object):
 
         slicer = SlicePickerSingle(size, repeats, ambiguous)
         junctions_dict = {}
+
+        # Calculate the number of digits in njunctions for to generate junctions ids
+        max_len = len(str(njunctions)
 
         for i in range(njunctions):
 
@@ -146,12 +185,12 @@ class ReferenceJunctions(object):
 
             # Define id, name and description to the SeqReccord object
             junction.name = junction.description = ""
-            junction.id = "Junction_{:06}".format(i)
+            junction.id = "Junction_{0:0{1}}".format(i, max_len)
 
             # Add informations to the annotations dictionnary
             junction.annotations = {
-                "ref1" : ref1,
-                "ref2" : ref2,
+                "ref1_source" : ref1,
+                "ref2_source" : ref2,
                 "ref1_refseq" : s1.annotations["refseq"],
                 "ref2_refseq" : s2.annotations["refseq"],
                 "ref1_location" : s1.annotations["location"],
@@ -182,15 +221,10 @@ class ReferenceJunctions(object):
         # Add informations to the annotations dictionnary
         s.annotations["refseq"] = refseq
         s.annotations["location"] = [start, end]
+        s.annotations["source"] = self
 
-        # Undefine description and define id and name
-        s.name = s.description = ""
-        s.id = "{}|{}:{}-{}({})".format(
-            self.name,
-            s.annotations["refseq"],
-            s.annotations["location"][0],
-            s.annotations["location"][1],
-            s.annotations["orientation"])
+        # Undefine description, id and name
+        s.name = s.description = s.id = ""
 
         # Increment the sampling counter of the refseq
         self.d[refseq].annotations["nb_samp"] += 1

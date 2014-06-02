@@ -85,7 +85,7 @@ class IsisConf(object):
         self.d["uniq_fjun"] = int (float(self.d["nread_fjun"])/samp_fjun)
 
         ## SONICATION SECTION ##
-        min_size = self.d["read_len"] + self.d["min_chimeric"] ###################################### VERIFY THIS PARAMETER
+        min_size = self.d["read_len"] + self.d["min_chimeric"]
         self.d.update (self._get_int ("Sonication", "sonic_min", min_size, None))
         self.d.update (self._get_int ("Sonication","sonic_mode", self.d["sonic_min"], None))
         self.d.update (self._get_int ("Sonication","sonic_max", self.d["sonic_mode"], None))
@@ -98,8 +98,6 @@ class IsisConf(object):
             ["very-good", "good", "medium", "bad", "very-bad"]))
 
     def __repr__ (self):
-        """Long description string used by interpreter and repr
-        """
         # A key list is created to output a sorted list of dict entries
         key_list = self.d.keys()
         key_list.sort()
@@ -110,9 +108,7 @@ class IsisConf(object):
         return result
 
     def __str__(self):
-        """Short representation
-        """
-        return "<Instance of " + self.__module__ + ">\n"
+        return "<Instance of {} from {} >".format(self.__class__.__name__, self.__module__)
 
 #####    GETERS    #####
 
