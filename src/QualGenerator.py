@@ -132,10 +132,10 @@ class QualGenerator(object):
         # (start, 3 intermediate points and end of a model read for
         # different quality categories
         qual_param_dict = {
-        "very_good": [[33, 38, 39, 38, 36], [2, 1, 1, 1, 5], [0, a1, a2, a3, a4]],
+        "very-good": [[33, 38, 39, 38, 36], [2, 1, 1, 1, 5], [0, a1, a2, a3, a4]],
         "good": [[32, 37, 38, 37, 32], [2, 2, 1, 3, 8], [0, a1, a2, a3, a4]],
         "medium": [[30, 36, 37, 32, 25], [4, 3, 2, 6, 8], [0, a1, a2, a3, a4]],
         "bad": [[20, 25, 27, 23, 15], [4, 3, 2, 7, 8], [0, a1, a2, a3, a4]],
-        "very_bad": [[10, 15, 15, 10, 5], [4, 3, 2, 8, 8], [0, a1, a2, a3, a4]]}
+        "very-bad": [[10, 15, 15, 10, 5], [4, 3, 2, 8, 8], [0, a1, a2, a3, a4]]}
 
         return qual_param_dict[quality]

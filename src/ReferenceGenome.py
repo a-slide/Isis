@@ -169,7 +169,7 @@ class ReferenceGenome(object):
             s.annotations["orientation"] = "-"
 
         # Add informations to the annotations dictionnary
-        s.annotations["refseq"] = refseq
+        s.annotations["refseq"] = self.d[refseq]
         s.annotations["location"] = [start, end]
         s.annotations["source"] = self
 

@@ -131,7 +131,8 @@ def write_fastq_single (fastgen, source_list, basename, qual_scale):
         for source, nread, graph in source_list:
             print ("\tWritting {} read(s) in Fastq file from {}".format(nread, source.getName()))
             # Calculate the number of digits in nread for read naming
-            max_len = len(str(nread)
+            max_len = len(str(nread))
+
             for i in range (nread):
                 # Ask a read to the source throught fastgen
                 read = fastgen.generate_fastq(source)
@@ -139,6 +140,7 @@ def write_fastq_single (fastgen, source_list, basename, qual_scale):
                 read.id = generate_id(i, max_len, read.annotations)
                 # Write the fastq formated read
                 f.write(read.format(qual_scale))
+
                 # if graph is True
                 if graph:
                     update_jun_cov (read.annotations["location"][0], read.annotations["location"][1])
@@ -148,7 +150,7 @@ def write_fastq_single (fastgen, source_list, basename, qual_scale):
         print (E)
         exit (0)
 
-def write_fastq_pair (fastgen, source_list, basename, qual_scale, read_len):
+def write_fastq_pair (fastgen, source_list, basename, qual_scale):
     """ Function printing the request number of pair end reads per reference
     in a fastq.gz file
     """
@@ -159,16 +161,18 @@ def write_fastq_pair (fastgen, source_list, basename, qual_scale, read_len):
         for source, nread, graph in source_list:
             print ("\tWritting {} read(s) in Fastq file from {}".format(nread, source.getName()))
             # Calculate the number of digits in nread for read naming
-            max_len = len(str(nread)
+            max_len = len(str(nread))
+
             for i in range (nread):
                 # Ask a read to the source throught fastgen
                 read1, read2 = fastgen.generate_fastq(source)
                 # Uniq read identifier
-                read1.id += "#{0:0{1}}".format(i, max_len)
-                read2.id += "|#{:010}".format(i)
+                read1.id = generate_id(i, max_len, read1.annotations)
+                read2.id = generate_id(i, max_len, read2.annotations)
                 # Write the fastq formated read
                 f1.write(read1.format(qual_scale))
                 f2.write(read2.format(qual_scale))
+
                 # if graph is True
                 if graph:
                     update_jun_cov (read1.annotations["location"][0], read1.annotations["location"][1])
@@ -193,17 +197,22 @@ def update_frag_len (frag_len):
     FRAG_LEN.append(frag_len)
 
 def generate_id(i,max_len, d):
-    id_string = "{}".format(d["source"].name)
-    id_string += "|#{0:0{1}}".format(i, max_len)
+    """ Generate an uniq identifier indicating from where the read was sampled
+    """
+    # Add source name
+    id_string = "{}".format(d["source"].getName())
+    # Add an uniq numeric identifier per source with zero padding
+    id_string += "|{0:0{1}}".format(i, max_len)
 
-    if (d["source"], RefJun):
-        s1, s2 = d["source"].origin_coord(d["refseq"], d["location"][0], d["location"][1])
-        id_string += "|1|{}|{}".format(s1, s2)
+    # If the source is a junction coordinate along original references are asked
+    # to the source reference junction in which the read was sampled
+    if isinstance (d["source"], RefJun):
+        id_string += "|1|{}".format(d["source"].origin_coord(d["refseq"], d["location"][0], d["location"][1]))
+    # Just enter strored coordinates if the reference is a ReferenceGenome obj
     else:
-        id_string += "|0|All={}:{}-{}".format(d["refseq"], d["location"][0], d["location"][1])
+        id_string += "|0|All={}:{}-{}".format(d["refseq"].id, d["location"][0], d["location"][1])
 
-
-    id_string += "|True" if isinstance(d["source"], RefJun) else "|False"
+    return id_string
 
 
 def frag_len_graph (min, max, basename):

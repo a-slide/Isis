@@ -105,11 +105,11 @@ class ReferenceJunctions(object):
                 writer.writerow([
                 ref,
                 self.d[ref].annotations["ref1_source"].getName(),
-                self.d[ref].annotations["ref1_refseq"],
+                self.d[ref].annotations["ref1_refseq"].id,
                 self.d[ref].annotations["ref1_location"],
                 self.d[ref].annotations["ref1_orientation"],
                 self.d[ref].annotations["ref2_source"].getName(),
-                self.d[ref].annotations["ref2_refseq"],
+                self.d[ref].annotations["ref2_refseq"].id,
                 self.d[ref].annotations["ref2_location"],
                 self.d[ref].annotations["ref2_orientation"],
                 self.d[ref].annotations["nb_samp"],
@@ -118,40 +118,40 @@ class ReferenceJunctions(object):
 
     def origin_coord (self, refseq, start, end):
         """ Return a string describing the the origin of a sequence from a
-        junction of the dictionnary
+        junction from the dictionnary
         """
         # If the give coord overlap only the left reference of a junction
-        if start <= end <= self.half_len:
+        if end < self.half_len:
             return ("{}-{}={}".format(
-            1, end-start,
-            self.coord_to_str(self.d[refseq].annotations, "ref1", start, end)))
+            0, end-start,
+            self.coord_to_str(refseq, "ref1", start, end+1)))
 
         # If the give coord overlap only the right reference of a junction
-        elif self.half_len <= start <= end:
+        elif start >= self.half_len:
             return ("{}-{}={}".format(
-            1,end-start,
-            self.coord_to_str(self.d[refseq].annotations, "ref2", start-self.half_len, end-self.half_len)))
+            0, end-start,
+            self.coord_to_str(refseq, "ref2", start-self.half_len, end-self.half_len+1)))
 
         # If the give coord overlap both references of a junction
         else :
             return ("{}-{}={}|{}-{}={}".format(
-            1,self.half_len-start,
-            self.coord_to_str(self.d[refseq].annotations, "ref1", start, self.half_len-1),
-            self.half_len-start+1, end-start,
-            self.coord_to_str(self.d[refseq].annotations, "ref2", self.half_len, end)))
+            0,self.half_len-start-1,
+            self.coord_to_str(refseq, "ref1", start, self.half_len),
+            self.half_len-start, end-start,
+            self.coord_to_str(refseq, "ref2", 0, end-self.half_len+1)))
 
-    def coord_to_str (self, d, ref, start, end, ):
+    def coord_to_str (self, refseq, refsource, start, end):
         """
         """
-        ref_id = d[ref+"_refseq"].id
+        ref_id = refseq.annotations[refsource+"_refseq"].id
 
-        if d[ref+"_orientation"] == '+':
-            ref_start = d[ref+"_location"][0] + start
-            ref_end = d[ref+"_location"][0] + end
+        if refseq.annotations[refsource+"_orientation"] == '+':
+            ref_start = refseq.annotations[refsource+"_location"][0] + start
+            ref_end = refseq.annotations[refsource+"_location"][0] + end
 
         else:
-            ref_start = d[ref+"_location"][1] - end
-            ref_end = d[ref+"_location"][1] - start
+            ref_start = refseq.annotations[refsource+"_location"][1] - end
+            ref_end = refseq.annotations[refsource+"_location"][1] - start
 
         return ("{}:{}-{}".format(ref_id, ref_start, ref_end))
 
@@ -169,7 +169,7 @@ class ReferenceJunctions(object):
         junctions_dict = {}
 
         # Calculate the number of digits in njunctions for to generate junctions ids
-        max_len = len(str(njunctions)
+        max_len = len(str(njunctions))
 
         for i in range(njunctions):
 
@@ -219,7 +219,7 @@ class ReferenceJunctions(object):
             s.annotations["orientation"] = "-"
 
         # Add informations to the annotations dictionnary
-        s.annotations["refseq"] = refseq
+        s.annotations["refseq"] = self.d[refseq]
         s.annotations["location"] = [start, end]
         s.annotations["source"] = self
 

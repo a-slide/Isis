@@ -10,7 +10,7 @@
 [General]
 ### General parameters
 # Overall quantity of reads (min = 1, INTEGER)
-read_num : 100000
+read_num : 1000
 # Read length (min = 1, INTEGER)
 read_len : 150
 # Frequency of mutations in final reads (min = 0, max = 1, FLOAT)
@@ -22,24 +22,24 @@ ambiguous : False
 # Generate graphical output du visualize coverage over junctions and distibution of fragment size if pair mode
 graph = True
 # Generate a sampling report for each reference (ie. number of time where a read was randomly sampled)
-report = False
+report = True
 
 
 [Frequency]
 ### Relative frequencies of DNA source in fastq (sum of frequencies should be equal to 1)
 # Host genome frequency (min = 0, max = 1, FLOAT)
-freq_host : 0.2
+freq_host : 0.25
 # Virus genome frequency (min = 0, max = 1, FLOAT)
-freq_virus : 0.2
+freq_virus : 0.25
 # True junctions frequency (min = 0, max = 1, FLOAT)
-freq_tjun : 0.59
+freq_tjun : 0.25
 # False junctions frequency (min = 0, max = 1, FLOAT)
-freq_fjun : 0.01
+freq_fjun : 0.25
 
 [Junction]
 ### Parameters specific to junctions between host and viral DNA
 # Minimal number bases of bases from each references in reads (min = 0, max = read size/2 for se mode, max = read_len for pe mode, INTEGER)
-min_chimeric : 150
+min_chimeric : 75
 # Mean number of sampling in true junctions (min = 0, max = freq_tj * read_num, FLOAT)
 samp_tjun : 20
 # Mean number of sampling in false junction (min = 0, max = freq_tj * read_num, FLOAT) *
