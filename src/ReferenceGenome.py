@@ -1,7 +1,15 @@
+"""
+@package    ReferenceGenome
+@brief
+@copyright  [GNU General Public License v2](http://www.gnu.org/licenses/gpl-2.0.html)
+@author     Adrien Leger <adrien.leger@gmail.com>
+"""
+
+#~~~~~~~PACKAGE IMPORTS~~~~~~~#
+
 # Standard library packages
 from random import random, randint
 import gzip
-import csv
 
 # Third party packages
 from Bio import SeqIO # Require Biopython
@@ -61,6 +69,9 @@ class ReferenceGenome(object):
     def getName(self):
         return self.name
 
+    def getLenDict(self):
+        return len(self.d)
+
 ###    PUBLIC METHODS    ####
 
     def get_slice(self, size):
@@ -86,21 +97,21 @@ class ReferenceGenome(object):
         for name, record in self.d.items():
             record.annotations ["nb_samp"] = 0
 
-    def write_samp_report (self):
-        """ Create a simple csv report
+    def samp_report (self):
+        """ Create a simple list report
         """
-        # Open a file for writting with python csv module
-        with open(self.name+"_report.csv", 'w') as csvfile:
-            writer = csv.writer(csvfile, delimiter='\t', quoting=csv.QUOTE_NONE)
-            writer.writerow(["chr", "lenght", "nb_samp"])
+        # Add column header
+        samp_list = [["chr", "lenght", "nb_samp"]]
 
-            # Create a sorted list of refseq
-            ref_list = self.d.keys()
-            ref_list.sort()
+        # Create a sorted list of refseq
+        ref_list = self.d.keys()
+        ref_list.sort()
 
-            # Export each refseq characteristics in a file
-            for ref in ref_list:
-                writer.writerow([ref, len(self.d[ref]), self.d[ref].annotations["nb_samp"]])
+        # Add values for each reference
+        for ref in ref_list:
+            samp_list.append([self.d[ref].id, len(self.d[ref]), self.d[ref].annotations["nb_samp"]])
+
+        return samp_list
 
 ###    PRIVATE METHODS    ###
 

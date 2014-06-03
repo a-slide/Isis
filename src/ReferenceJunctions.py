@@ -1,6 +1,14 @@
+"""
+@package    ReferenceJunctions
+@brief
+@copyright  [GNU General Public License v2](http://www.gnu.org/licenses/gpl-2.0.html)
+@author     Adrien Leger <adrien.leger@gmail.com>
+"""
+
+#~~~~~~~PACKAGE IMPORTS~~~~~~~#
+
 # Standard library packages
 from random import sample, randint
-import csv
 
 # Local packages
 from SlicePicker import SlicePickerSingle
@@ -51,6 +59,9 @@ class ReferenceJunctions(object):
     def getName(self):
         return self.name
 
+    def getLenDict(self):
+        return len(self.d)
+
 ###    PUBLIC METHODS    ####
 
     def get_slice (self, size):
@@ -76,34 +87,22 @@ class ReferenceJunctions(object):
         for name, record in self.d.items():
             record.annotations ["nb_samp"] = 0
 
-    def write_samp_report (self):
-        """ Create a simple csv report
+    def samp_report (self):
+        """ Create a simple list report
         """
-        # Open a file for writting with python csv module
-        with open(self.name+"_report.csv", 'w') as csvfile:
-            writer = csv.writer(csvfile, delimiter='\t', quoting=csv.QUOTE_NONE)
-            writer.writerow([
-                "junction_id",
-                "ref1_source",
-                "ref1_chr",
-                "ref1_loc",
-                "ref1_orientation",
-                "ref2_source",
-                "ref2_chr",
-                "ref2_loc",
-                "ref2_orientation",
-                "nb_samp",
-                "sequence from ref1",
-                "sequence ref2"])
+        # Add column header
+        samp_list = [["junction_id", "ref1_source", "ref1_chr", "ref1_loc",
+                "ref1_orientation", "ref2_source", "ref2_chr", "ref2_loc",
+                "ref2_orientation", "nb_samp"]]
 
-            # Create a sorted list of refseq
-            ref_list = self.d.keys()
-            ref_list.sort()
+        # Create a sorted list of refseq
+        ref_list = self.d.keys()
+        ref_list.sort()
 
-            # Export each refseq characteristics in a file
-            for ref in ref_list:
-                writer.writerow([
-                ref,
+        # Add values for each reference
+        for ref in ref_list:
+            samp_list.append([
+                self.d[ref].id,
                 self.d[ref].annotations["ref1_source"].getName(),
                 self.d[ref].annotations["ref1_refseq"].id,
                 self.d[ref].annotations["ref1_location"],
@@ -112,9 +111,9 @@ class ReferenceJunctions(object):
                 self.d[ref].annotations["ref2_refseq"].id,
                 self.d[ref].annotations["ref2_location"],
                 self.d[ref].annotations["ref2_orientation"],
-                self.d[ref].annotations["nb_samp"],
-                self.d[ref].seq[ :self.half_len],
-                self.d[ref].seq[self.half_len+1: ]])
+                self.d[ref].annotations["nb_samp"]])
+
+        return samp_list
 
     def origin_coord (self, refseq, start, end):
         """ Return a string describing the the origin of a sequence from a
@@ -124,37 +123,21 @@ class ReferenceJunctions(object):
         if end < self.half_len:
             return ("{}-{}={}".format(
             0, end-start,
-            self.coord_to_str(refseq, "ref1", start, end+1)))
+            self._coord_to_str(refseq, "ref1", start, end+1)))
 
         # If the give coord overlap only the right reference of a junction
         elif start >= self.half_len:
             return ("{}-{}={}".format(
             0, end-start,
-            self.coord_to_str(refseq, "ref2", start-self.half_len, end-self.half_len+1)))
+            self._coord_to_str(refseq, "ref2", start-self.half_len, end-self.half_len+1)))
 
         # If the give coord overlap both references of a junction
         else :
             return ("{}-{}={}|{}-{}={}".format(
             0,self.half_len-start-1,
-            self.coord_to_str(refseq, "ref1", start, self.half_len),
+            self._coord_to_str(refseq, "ref1", start, self.half_len),
             self.half_len-start, end-start,
-            self.coord_to_str(refseq, "ref2", 0, end-self.half_len+1)))
-
-    def coord_to_str (self, refseq, refsource, start, end):
-        """
-        """
-        ref_id = refseq.annotations[refsource+"_refseq"].id
-
-        if refseq.annotations[refsource+"_orientation"] == '+':
-            ref_start = refseq.annotations[refsource+"_location"][0] + start
-            ref_end = refseq.annotations[refsource+"_location"][0] + end
-
-        else:
-            ref_start = refseq.annotations[refsource+"_location"][1] - end
-            ref_end = refseq.annotations[refsource+"_location"][1] - start
-
-        return ("{}:{}-{}".format(ref_id, ref_start, ref_end))
-
+            self._coord_to_str(refseq, "ref2", 0, end-self.half_len+1)))
 
 ###    PRIVATE METHODS    ###
 
@@ -230,3 +213,28 @@ class ReferenceJunctions(object):
         self.d[refseq].annotations["nb_samp"] += 1
 
         return s
+
+
+    def _coord_to_str (self, refseq, refsource, start, end):
+        """ Return the coordinate on ref1 or ref2 from a junction
+        @param refseq SeqReccord object cointaining a junction from the class
+        junction dict
+        @param refsource Indicates if the source reference sequence is the left
+        part ("ref1") or the right part ("ref2") of the junction
+        @param start Start coordinate relative to the start of the reference
+        @param start End coordinate relative to the start of the reference
+        @return A string composed of the id of the source reference followed by
+        start and end coordinates on the source reference (ex : chr12:124-434 )
+        """
+
+        ref_id = refseq.annotations[refsource+"_refseq"].id
+
+        if refseq.annotations[refsource+"_orientation"] == '+':
+            ref_start = refseq.annotations[refsource+"_location"][0] + start
+            ref_end = refseq.annotations[refsource+"_location"][0] + end
+
+        else:
+            ref_start = refseq.annotations[refsource+"_location"][1] - end
+            ref_end = refseq.annotations[refsource+"_location"][1] - start
+
+        return ("{}:{}-{}".format(ref_id, ref_start, ref_end))

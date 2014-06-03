@@ -1,5 +1,14 @@
+"""
+@package    IsisConf
+@brief
+@copyright  [GNU General Public License v2](http://www.gnu.org/licenses/gpl-2.0.html)
+@author     Adrien Leger <adrien.leger@gmail.com>
+"""
+
+#~~~~~~~PACKAGE IMPORTS~~~~~~~#
+
 # Standard library packages
-from sys import maxsize
+from sys import exit as sys_exit
 import ConfigParser
 import optparse
 
@@ -11,13 +20,10 @@ class IsisConfException(Exception):
 ####################################################################################################
 
     def __init__(self, msg): # Object constructor initialized with a custom user message
-        self.msg = msg
-
-    def __str__(self): # String returned by print
         err_msg = "IsisConfException : An error occured while parsing Isis options!\n"
-        err_msg += "\t{}.\n\tPlease modify your parameters\n".format(self.msg)
-        return err_msg
-
+        err_msg += "\t{}.\n\tPlease ajust your settings\n".format(msg)
+        print (err_msg)
+        sys_exit ()
 
 ####################################################################################################
 
@@ -30,11 +36,11 @@ class IsisConf(object):
 
 #####    FONDAMENTAL METHODS    #####
 
-    def __init__(self):
+    def __init__(self, program_name, program_version):
         """ Import parameters and verify their values.
         """
-        print "Parsing and verification of config file with IsisConf"
 
+        print "Parsing and verification of config file with IsisConf"
         # dictionnary to store validated parameters from command line
         # arguments and conf_file parsing
         self.d = {}
@@ -42,7 +48,7 @@ class IsisConf(object):
         ## Parse command line argument ####
         # add hg_filename, vg_filename, conf_filename and output_prefix
         # entries to self.d
-        self.d.update (self._optparser())
+        self.d.update (self._optparser(program_name, program_version))
 
         ## Extract configuration parameters from the conf file
         # creating a instance of RawConfigParser ####
@@ -120,12 +126,12 @@ class IsisConf(object):
 
 #####    PRIVATE METHODS    #####
 
-    def _optparser(self):
+    def _optparser(self, program_name, program_version):
         """Parse command line arguments prompt and verify the filename
         """
-        # Usage and vesion strings
+        # Usage and version strings
         usage_string = "%prog -H Host_genome.fa[.gz] -V Viral_genome.fa[.gz] -C Conf_file.txt [-o Output_prefix] [-p |-s]"
-        version_string = "Isis 0.1"
+        version_string = program_name + program_version
         optparser = optparse.OptionParser(usage = usage_string, version = version_string)
 
         # Define optparser options
@@ -146,9 +152,9 @@ class IsisConf(object):
         options, args = optparser.parse_args()
 
         # Validate option and generate a dictionnary
-        arg_dict = {'host_genome' : self._check_file (options.hg, "host_genome"),
-                    'virus_genome' : self._check_file (options.vg, "virus_genome"),
-                    'conf_file' : self._check_file (options.conf, "conf_file"),
+        arg_dict = {'host_genome' : self._check_file (options.hg, "--host_genome | -H"),
+                    'virus_genome' : self._check_file (options.vg, "--virus_genome | -V "),
+                    'conf_file' : self._check_file (options.conf, "conf_file | -C"),
                     'basename' : options.output,
                     'pair' : self._check_mode (options.single, options.pair)}
 
@@ -158,7 +164,7 @@ class IsisConf(object):
         """Try to path from the opt dictionnary"""
 
         if not path:
-            raise Exception ("{} is a mandatory parameter".format(descr))
+            raise IsisConfException ("{} is a mandatory command line argument".format(descr))
 
         try:
             handle = open(path, "r")
@@ -166,14 +172,14 @@ class IsisConf(object):
             return path
 
         except IOError:
-            raise Exception ("Error : " + path + " can't be read\n\
+            raise IsisConfException ("Error : " + path + " can't be read\n\
             Please enter a valid path")
 
     def _check_mode (self, single, pair):
         """Try to path from the opt dictionnary"""
 
         if pair and single:
-            raise Exception ("-p and -s are incompatible options")
+            raise IsisConfException ("-p and -s are incompatible options")
 
         return False if single else True
 

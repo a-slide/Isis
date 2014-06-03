@@ -1,3 +1,12 @@
+"""
+@package    SlicePicker
+@brief
+@copyright  [GNU General Public License v2](http://www.gnu.org/licenses/gpl-2.0.html)
+@author     Adrien Leger <adrien.leger@gmail.com>
+"""
+
+#~~~~~~~PACKAGE IMPORTS~~~~~~~#
+
 # Standard library packages
 from random import random, sample, betavariate
 
