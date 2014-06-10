@@ -2,7 +2,12 @@
 @package    SlicePicker
 @brief
 @copyright  [GNU General Public License v2](http://www.gnu.org/licenses/gpl-2.0.html)
-@author     Adrien Leger <adrien.leger@gmail.com>
+@author     Adrien Leger - 2014
+* <adrien.leger@gmail.com>
+* <adrien.leger@inserm.fr>
+* <adrien.leger@univ-nantes.fr>
+* [Github](https://github.com/a-slide)
+* [Atlantic Gene Therapies - INSERM 1089] (http://www.atlantic-gene-therapies.fr/)
 """
 
 #~~~~~~~PACKAGE IMPORTS~~~~~~~#
@@ -14,14 +19,14 @@ from random import random, sample, betavariate
 from Bio.Alphabet.IUPAC import IUPACAmbiguousDNA as Ambiguous
 from Bio.Alphabet.IUPAC import IUPACUnambiguousDNA as Unambiguous
 
-####################################################################################################
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
 class SlicePicker(object):
     """Base class for SlicePickerSingle and SlicePickerPair
     """
-####################################################################################################
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
-#####    FONDAMENTAL METHODS    #####
+    #~~~~~~~FONDAMENTAL METHODS~~~~~~~#
 
     def __init__(self, read_len, repeats, ambiguous, mut_freq=0):
         """Initialize the class with generic variables
@@ -43,7 +48,7 @@ class SlicePicker(object):
     def __str__(self):
         return "<Instance of {} from {} >".format(self.__class__.__name__, self.__module__)
 
-#####    GETTERS    #####
+    #~~~~~~~ACCESS METHODS~~~~~~~#
 
     def get_mut_freq (self):
         return self.mut_freq
@@ -54,7 +59,7 @@ class SlicePicker(object):
     def get_read_len (self):
         return self.read_len
 
-#####    PRIVATE METHODS    #####
+    #~~~~~~~PRIVATE METHODS~~~~~~~#
 
     def _IUPAC_alphabet(self, repeats, ambiguous):
         """ Define an DNA letters alphabet according to the user
@@ -94,18 +99,14 @@ class SlicePicker(object):
         """return a DNA base different from the given base"""
         return sample([mut_base for mut_base in Unambiguous.letters if mut_base not in base.upper()],1)[0]
 
-####################################################################################################
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
 class SlicePickerSingle(SlicePicker):
     """For single read sampling
     """
-####################################################################################################
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
-#####    FONDAMENTAL METHODS    #####
-
-    # Use base class __init__, __repr__ and __str__ methods
-
-#####    ACTION METHODS    #####
+    #~~~~~~~PUBLIC METHODS~~~~~~~#
 
     def pick_slice(self, source):
         """Generate a candidate read. The presence or absence of repeats
@@ -130,14 +131,14 @@ class SlicePickerSingle(SlicePicker):
         raise Exception("ERROR. Unable to find a valid slice after 100 tries.\n\
         Please review repetition and ambiguity parameters and verify your reference sequences")
 
-####################################################################################################
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
 class SlicePickerPair(SlicePicker):
     """For paired read sampling
     """
-####################################################################################################
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
-#####    FONDAMENTAL METHODS    #####
+    #~~~~~~~FONDAMENTAL METHODS~~~~~~~#
 
     def __init__(self, read_len, sonic_min, sonic_mode, sonic_max, sonic_certainty, repeats,
                  ambiguous, mut_freq):
@@ -169,7 +170,7 @@ class SlicePickerPair(SlicePicker):
         descr += "beta {}\n".format(self.beta)
         return descr
 
-#####    GETTERS    #####
+    #~~~~~~~ACCESS METHODS~~~~~~~#
 
     def get_sonic_min (self):
         return self.sonic_min
@@ -189,7 +190,7 @@ class SlicePickerPair(SlicePicker):
     def get_beta (self):
         return self.beta
 
-#####    ACTION METHODS    #####
+    #~~~~~~~PUBLIC METHODS~~~~~~~#
 
     def pick_slice(self, source):
         """Generate a candidate read pair from a fragment of a length
@@ -221,7 +222,7 @@ class SlicePickerPair(SlicePicker):
         raise Exception("ERROR. Unable to find a valid slice after 100 tries.\n\
         Please review repetition and ambiguity parameters and verify your reference sequences")
 
-#####    PRIVATE METHODS    #####
+    #~~~~~~~PRIVATE METHODS~~~~~~~#
 
     def _beta_shape(self):
         """Calculate shape parameters alpha and beta to fit experimental

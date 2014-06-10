@@ -2,7 +2,12 @@
 @package    ReferenceJunctions
 @brief
 @copyright  [GNU General Public License v2](http://www.gnu.org/licenses/gpl-2.0.html)
-@author     Adrien Leger <adrien.leger@gmail.com>
+@author     Adrien Leger - 2014
+* <adrien.leger@gmail.com>
+* <adrien.leger@inserm.fr>
+* <adrien.leger@univ-nantes.fr>
+* [Github](https://github.com/a-slide)
+* [Atlantic Gene Therapies - INSERM 1089] (http://www.atlantic-gene-therapies.fr/)
 """
 
 #~~~~~~~PACKAGE IMPORTS~~~~~~~#
@@ -13,14 +18,15 @@ from random import sample, randint
 # Local packages
 from SlicePicker import SlicePickerSingle
 
-####################################################################################################
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
 class ReferenceJunctions(object):
     """ Create de dictionnary of sequence by merging from 2 references
     and by creating a chimeric junction between both for n junctions
     """
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
-###    FONDAMENTAL METHODS    ###
+    #~~~~~~~FONDAMENTAL METHODS~~~~~~~#
 
     def __init__(self, name, min_chimeric, size, njun, ref1, ref2, repeats, ambiguous):
         """Create a dictionnary of junctions by merging 2 SeqRecords
@@ -48,7 +54,7 @@ class ReferenceJunctions(object):
     def __str__(self):
         return "<Instance of {} from {} >".format(self.__class__.__name__, self.__module__)
 
-###    GETERS    ###
+    #~~~~~~~ACCESS METHODS~~~~~~~#
 
     def get(self, varkey):
         return self.d[varkey]
@@ -122,24 +128,24 @@ class ReferenceJunctions(object):
         # If the give coord overlap only the left reference of a junction
         if end < self.half_len:
             return ("{}-{}={}".format(
-            0, end-start,
+            1, end-start,
             self._coord_to_str(refseq, "ref1", start, end+1)))
 
         # If the give coord overlap only the right reference of a junction
         elif start >= self.half_len:
             return ("{}-{}={}".format(
-            0, end-start,
+            1, end-start,
             self._coord_to_str(refseq, "ref2", start-self.half_len, end-self.half_len+1)))
 
         # If the give coord overlap both references of a junction
         else :
             return ("{}-{}={}|{}-{}={}".format(
-            0,self.half_len-start-1,
+            1,self.half_len-start,
             self._coord_to_str(refseq, "ref1", start, self.half_len),
-            self.half_len-start, end-start,
+            self.half_len-start+1, end-start,
             self._coord_to_str(refseq, "ref2", 0, end-self.half_len+1)))
 
-###    PRIVATE METHODS    ###
+    #~~~~~~~PRIVATE METHODS~~~~~~~#
 
     def _create_junctions_dict (self, size, njunctions, ref1, ref2, repeats, ambiguous):
         """Fill a dictionary with junctions between sequences from ref1

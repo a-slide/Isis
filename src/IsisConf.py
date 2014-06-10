@@ -1,8 +1,17 @@
 """
 @package    IsisConf
-@brief
+@brief      **Configuration file and command line argument parser/verifier**
+Import command line arguments with optparse and parse configuration file with
+ConfigParser. Values are imported in a dictionnary after verification. If a
+value is invalid, a message describing the error will be printed before program
+exit.
 @copyright  [GNU General Public License v2](http://www.gnu.org/licenses/gpl-2.0.html)
-@author     Adrien Leger <adrien.leger@gmail.com>
+@author     Adrien Leger - 2014
+* <adrien.leger@gmail.com>
+* <adrien.leger@inserm.fr>
+* <adrien.leger@univ-nantes.fr>
+* [Github](https://github.com/a-slide)
+* [Atlantic Gene Therapies - INSERM 1089] (http://www.atlantic-gene-therapies.fr/)
 """
 
 #~~~~~~~PACKAGE IMPORTS~~~~~~~#
@@ -12,50 +21,65 @@ from sys import exit as sys_exit
 import ConfigParser
 import optparse
 
-####################################################################################################
-
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 class IsisConfException(Exception):
-    """Custom Exception Class to handle error while parsing Isis options
     """
-####################################################################################################
+    @class IsisConfException
+    @brief Custom Exception Class to handle error while parsing Isis options
+    """
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
     def __init__(self, msg): # Object constructor initialized with a custom user message
+        """
+        Catch an IsisConfException, print a description of the error and exit without python
+        error printing traceback
+        @param msg spefific error message
+        """
         err_msg = "IsisConfException : An error occured while parsing Isis options!\n"
         err_msg += "\t{}.\n\tPlease ajust your settings\n".format(msg)
         print (err_msg)
         sys_exit ()
 
-####################################################################################################
 
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 class IsisConf(object):
-    """Import configuration parameters from command lines arguments and
-    verify parameters value range and validity. Users are invited to
-    corect their values if a parameters is invalid.
     """
-####################################################################################################
+    @class IsisConf
+    @brief Import command line arguments with optparse and parse configuration file with
+    ConfigParser. Values are imported in a dictionnary after verification. If a value is invalid,
+    a message describing the error will be printed before program exit.
+    """
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
-#####    FONDAMENTAL METHODS    #####
+    #~~~~~~~FONDAMENTAL METHODS~~~~~~~#
 
     def __init__(self, program_name, program_version):
-        """ Import parameters and verify their values.
+        """
+        Import command line arguments with optparse and parse configuration file
+        with ConfigParser. Values are imported in a dictionnary after verification.
+        If a value is invalid, a message describing the error will be printed
+        before program exit.
+        @param program_name Name of the program
+        @param program_version Version of the program
         """
 
         print "Parsing and verification of config file with IsisConf"
-        # dictionnary to store validated parameters from command line
-        # arguments and conf_file parsing
+        ## Dictionnary to store valid parameters from command line arguments and configuration file
         self.d = {}
 
-        ## Parse command line argument ####
-        # add hg_filename, vg_filename, conf_filename and output_prefix
-        # entries to self.d
+        #~~~Parse command line argument~~~#
+
+        # add hg_filename, vg_filename, conf_filename and output_prefix entries to self.d
         self.d.update (self._optparser(program_name, program_version))
 
-        ## Extract configuration parameters from the conf file
-        # creating a instance of RawConfigParser ####
+        #~~~Extract configuration parameters from the conf file~~~#
+
+        ## Instance of RawConfigParser
         self.config = ConfigParser.RawConfigParser(allow_no_value = False)
+
         self.config.read(self.d["conf_file"])
 
-        ## GENERAL SECTION ##
+        #~GENERAL SECTION~#
         self.d.update (self._get_int("General", "read_num", 1, None))
         self.d.update (self._get_int("General", "read_len", 1, None))
         self.d.update (self._get_float("General", "mut_freq", 0, 1))
@@ -64,12 +88,13 @@ class IsisConf(object):
         self.d.update (self._get_bool("General", "graph"))
         self.d.update (self._get_bool("General", "report"))
 
-        ## FREQUENCY SECTION ##
+        #~FREQUENCY SECTION~#
         freq_host = self._get_float ("Frequency", "freq_host", 0, 1).values()[0]
         freq_virus = self._get_float ("Frequency", "freq_virus", 0, 1).values()[0]
         freq_tjun = self._get_float ("Frequency", "freq_tjun", 0, 1).values()[0]
         freq_fjun = self._get_float ("Frequency", "freq_fjun", 0, 1).values()[0]
-        self._verify_freq_sum ([freq_host, freq_virus, freq_tjun, freq_fjun])
+        if (freq_host+freq_virus+freq_tjun+freq_fjun) != 1:
+            raise IsisConfException ("The sum of read number frequencies is not equal to 1")
 
         # Calculate the number of reads from validated frequencies
         self.d["nread_host"] = int (freq_host * self.d["read_num"])
@@ -77,7 +102,7 @@ class IsisConf(object):
         self.d["nread_tjun"] = int (freq_tjun * self.d["read_num"])
         self.d["nread_fjun"] = int (freq_fjun * self.d["read_num"])
 
-        ## JUNCTION SECTION ##
+        #~JUNCTION SECTION~#
         if self.d["pair"]:
             self.d.update (self._get_int ("Junction", "min_chimeric", 0, self.d["read_len"]))
         else:
@@ -86,22 +111,20 @@ class IsisConf(object):
         samp_tjun = self._get_float ("Junction", "samp_tjun", 0, self.d["nread_tjun"]).values()[0]
         samp_fjun = self._get_float ("Junction", "samp_fjun", 0, self.d["nread_fjun"]).values()[0]
 
-        # Calculate the number of uniq source junctions to be generated
+        # Calculate the number of uniq junctions in ReferenceJunctions to be generated
         self.d["uniq_tjun"] = int (float(self.d["nread_tjun"])/samp_tjun)
         self.d["uniq_fjun"] = int (float(self.d["nread_fjun"])/samp_fjun)
 
-        ## SONICATION SECTION ##
+        #~SONICATION SECTION~#
         min_size = self.d["read_len"] + self.d["min_chimeric"]
         self.d.update (self._get_int ("Sonication", "sonic_min", min_size, None))
         self.d.update (self._get_int ("Sonication","sonic_mode", self.d["sonic_min"], None))
         self.d.update (self._get_int ("Sonication","sonic_max", self.d["sonic_mode"], None))
         self.d.update (self._get_int ("Sonication","sonic_certainty", 5, 50))
 
-        ## QUALITY SECTION ##
-        self.d.update (self._get_str ( "Quality", "qual_scale",
-            ["fastq-sanger", "fastq-solexa", "fastq-illumina"]))
-        self.d.update (self._get_str ( "Quality", "qual_range",
-            ["very-good", "good", "medium", "bad", "very-bad"]))
+         #~QUALITY SECTION~#
+        self.d.update (self._get_str ( "Quality", "qual_scale", ["fastq-sanger", "fastq-solexa", "fastq-illumina"]))
+        self.d.update (self._get_str ( "Quality", "qual_range", ["very-good", "good", "medium", "bad", "very-bad"]))
 
     def __repr__ (self):
         # A key list is created to output a sorted list of dict entries
@@ -116,7 +139,7 @@ class IsisConf(object):
     def __str__(self):
         return "<Instance of {} from {} >".format(self.__class__.__name__, self.__module__)
 
-#####    GETERS    #####
+    #~~~~~~~ACCESS METHODS~~~~~~~#
 
     def getDict (self):
         return self.d
@@ -124,10 +147,18 @@ class IsisConf(object):
     def get (self, key):
         return self.d[key]
 
-#####    PRIVATE METHODS    #####
+    #~~~~~~~PRIVATE METHODS~~~~~~~#
 
     def _optparser(self, program_name, program_version):
-        """Parse command line arguments prompt and verify the filename
+        """
+        Parse command line arguments with optparse and verify the file validity
+        @param program_name Name of the program
+        @param program_version Version of the program
+        @return A dictionnary containing:
+        * Host and virus fasta file paths
+        * Configuration file path
+        * Sequencing mode : pair or single
+        * Basename for output files
         """
         # Usage and version strings
         usage_string = "%prog -H Host_genome.fa[.gz] -V Viral_genome.fa[.gz] -C Conf_file.txt [-o Output_prefix] [-p |-s]"
@@ -161,8 +192,12 @@ class IsisConf(object):
         return arg_dict
 
     def _check_file (self, path, descr):
-        """Try to path from the opt dictionnary"""
-
+        """
+        Try to open the file at a given path. In case of impossibility an IsisConfException is raised
+        @param path     Path of the file to verify
+        @param descr    name of the option associated with the file
+        @return         Valid path
+        """
         if not path:
             raise IsisConfException ("{} is a mandatory command line argument".format(descr))
 
@@ -176,17 +211,27 @@ class IsisConf(object):
             Please enter a valid path")
 
     def _check_mode (self, single, pair):
-        """Try to path from the opt dictionnary"""
-
+        """
+        Verify the compatibility of mode option. If both options had been selected an
+        IsisConfException is raised
+        @param single Boolean value of the single option
+        @param pair Boolean value of the pair option
+        @return A boolean indicating if pair end mode should be used
+        """
         if pair and single:
             raise IsisConfException ("-p and -s are incompatible options")
-
         return False if single else True
 
 
     def _get_int(self, section, name, min=None, max=None):
-        """Import an integer from self.config dict and verify its value
-        If an error occur, an IsisConfException is raised
+        """
+        Import an integer from self.config dict and verify its value. If an error occur, an
+        IsisConfException is raised.
+        @param section Name of the section in the configuration file where the option is (string)
+        @param name Name of the option (string)
+        @param min Minimal value (integer)
+        @param min Maximal value (integer)
+        @return An integer within the requested range
         """
         try:
             # Parse file with RawConfigParser
@@ -209,8 +254,14 @@ class IsisConf(object):
 
 
     def _get_float(self, section, name, min=None, max=None):
-        """Import an float from self.config dict and verify its value
-        If an error occur, an IsisConfException is raised
+        """
+        Import an float from self.config dict and verify its value. If an error occur, an
+        IsisConfException is raised.
+        @param section Name of the section in the configuration file where the option is (string)
+        @param name Name of the option (string)
+        @param min Minimal value (float)
+        @param min Maximal value (float)
+        @return A float within the requested range
         """
         try:
             # Parse file with RawConfigParser
@@ -233,8 +284,12 @@ class IsisConf(object):
 
 
     def _get_bool(self, section, name):
-        """Import a boolean from self.config dict and verify its value
-        If an error occur, an IsisConfException is raised
+        """
+        Import a boolean from self.config dict and verify its value. If an error occur, an
+        IsisConfException is raised
+        @param section Name of the section in the configuration file where the option is (string)
+        @param name Name of the option (string)
+        @return A valid boolean value
         """
         try:
             # Parse file with RawConfigParser
@@ -251,8 +306,13 @@ class IsisConf(object):
 
 
     def _get_str (self, section, name, allowed):
-        """Import an float from self.config dict and verify its value
-        If an error occur, an IsisConfException is raised
+        """
+        Import an string from self.config dict and verify that its value is in the list of
+        autorized entries. If an error occur, an IsisConfException is raised
+        @param section Name of the section in the configuration file where the option is (string)
+        @param name Name of the option (string)
+        @param allowed List of allowed entries (list of string)
+        @return A valid string
         """
         try:
             # Parse file with RawConfigParser
@@ -270,10 +330,3 @@ class IsisConf(object):
             raise IsisConfException ("Section {} was not found in conf file.".format(section))
         except ValueError:
             raise IsisConfException ("{} value is not a valid float".format(name))
-
-
-    def _verify_freq_sum(self, val_list):
-        """ Verify if the sum of frequencies is equal to one
-        """
-        if sum(val_list) != 1:
-            raise IsisConfException ("The sum of read number frequencies is not equal to 1")

@@ -1,8 +1,19 @@
 """
 @package    QualGenerator
-@brief
+@brief  **Generate list of quality PHRED quality values mimicking illumina quality pattern.**
+Briefly, 5 templates define very good, good, medium, bad and very bad quality at 5 distributed
+positions. According to the lenght of reads to generate, a object specific pattern will be
+calculated at class instantiation. From these templates, "random guided" quality quality strings
+can be generated. It will follow the object pattern thanks to a coefficient of attraction toward
+pattern mean but with a part of randomness thank a gaussian distribution according to pattern
+standard deviation.
 @copyright  [GNU General Public License v2](http://www.gnu.org/licenses/gpl-2.0.html)
-@author     Adrien Leger <adrien.leger@gmail.com>
+@author     Adrien Leger - 2014
+* <adrien.leger@gmail.com>
+* <adrien.leger@inserm.fr>
+* <adrien.leger@univ-nantes.fr>
+* [Github](https://github.com/a-slide)
+* [Atlantic Gene Therapies - INSERM 1089] (http://www.atlantic-gene-therapies.fr/)
 """
 
 #~~~~~~~PACKAGE IMPORTS~~~~~~~#
@@ -10,20 +21,31 @@
 # Standard library packages
 from random import gauss
 
-####################################################################################################
-
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 class QualGenerator(object):
-    """Accessory class generating quality strings following a given
-    pattern"""
+    """
+    @class QualGenerator
+    @brief Generate list of quality PHRED quality values mimicking illumina quality score.
+    A pattern is created at object instantiation following en read lenght and a quality range mold.
+    It contains a mean and a standard deviation for all positions in the defined lenght. This mold
+    is used to generate a list of quality scores when calling qual_score() function.
+    """
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
-###    FONDAMENTAL METHODS    ###
 
-    def __init__(self, length, quality):
-        """Create the class by asigning a lenght and a pattern of
-        quality mean, sd variation for all positions along a given len
+    #~~~~~~~FONDAMENTAL METHODS~~~~~~~#
+
+    def __init__(self, length, qual_range):
         """
+        Create the class by asigning a lenght and a pattern of quality mean, sd variation for all
+        positions along a given len
+        @param length Lenght of quality list that the object will be able to produce (integer)
+        @param qual_range Range of quality within a list f predefined values (string)
+        """
+        ## Lenght of quality list that the object will be able to produce (integer)
         self.length = length
-        self.qual_pattern = self._quality_pattern(length, quality)
+        ## Quality patern template containing mean and sd for each position in the length (list)
+        self.qual_pattern = self._quality_pattern(length, qual_range)
 
     def __repr__(self):
         return "{}\n Mean qual pattern :\n{}\nStandard dev pattern :\n{}".format(
@@ -34,7 +56,7 @@ class QualGenerator(object):
     def __str__(self):
         return "<Instance of {} from {} >".format(self.__class__.__name__, self.__module__)
 
-###    GETERS    ###
+    #~~~~~~~ACCESS METHODS~~~~~~~#
 
     def get_qual_pattern(self):
         return self.qual_pattern
@@ -48,11 +70,13 @@ class QualGenerator(object):
     def get_length(self):
         return self.length
 
-###    PUBLIC METHODS    ####
+    #~~~~~~~PUBLIC METHODS~~~~~~~#
 
     def qual_score(self):
-        """Generate a quality string mimicking a real fastq qual track
-        Based on the pattern defined an class instanciation.
+        """
+        Generate a list of PHRED values mimicking a real Illumina fastq quality score.
+         Based on the pattern defined an class instanciation.
+
         """
         # Create an empty list to store scores
         qual_string = []
@@ -77,7 +101,7 @@ class QualGenerator(object):
 
         return qual_string
 
-###    PRIVATE METHODS    ###
+    #~~~~~~~PRIVATE METHODS~~~~~~~#
 
     def _valid_score(self, qual_mean, sigma): # sigma >= 1
         """Calculate a new valid score to based on the mean score and a

@@ -2,7 +2,12 @@
 @package    ReferenceGenome
 @brief
 @copyright  [GNU General Public License v2](http://www.gnu.org/licenses/gpl-2.0.html)
-@author     Adrien Leger <adrien.leger@gmail.com>
+@author     Adrien Leger - 2014
+* <adrien.leger@gmail.com>
+* <adrien.leger@inserm.fr>
+* <adrien.leger@univ-nantes.fr>
+* [Github](https://github.com/a-slide)
+* [Atlantic Gene Therapies - INSERM 1089] (http://www.atlantic-gene-therapies.fr/)
 """
 
 #~~~~~~~PACKAGE IMPORTS~~~~~~~#
@@ -14,7 +19,7 @@ import gzip
 # Third party packages
 from Bio import SeqIO # Require Biopython
 
-####################################################################################################
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
 class ReferenceGenome(object):
     """Import reference sequences from a fasta files and store each of
@@ -22,8 +27,9 @@ class ReferenceGenome(object):
     biopython seqrecord slice from one of the reference sequences,
     proportionally to the size of all reference sequences.
     """
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
-###    FONDAMENTAL METHODS    ###
+    #~~~~~~~FONDAMENTAL METHODS~~~~~~~#
 
     def __init__(self, name, filename):
         """Import reference sequences from fasta file and create a list
@@ -55,7 +61,7 @@ class ReferenceGenome(object):
     def __str__(self):
         return "<Instance of {} from {} >".format(self.__class__.__name__, self.__module__)
 
-###    GETERS    ###
+    #~~~~~~~ACCESS METHODS~~~~~~~#
 
     def get(self, varkey):
         return self.d[varkey]
@@ -72,7 +78,7 @@ class ReferenceGenome(object):
     def getLenDict(self):
         return len(self.d)
 
-###    PUBLIC METHODS    ####
+    #~~~~~~~PUBLIC METHODS~~~~~~~#
 
     def get_slice(self, size):
         """Generate a candidate slice and return it
@@ -113,7 +119,7 @@ class ReferenceGenome(object):
 
         return samp_list
 
-###    PRIVATE METHODS    ###
+    #~~~~~~~PRIVATE METHODS~~~~~~~#
 
     def _import_fasta(self, filename):
         """Import fasta files in a dictionary of biopython SeqRecord
