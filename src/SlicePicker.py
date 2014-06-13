@@ -1,6 +1,8 @@
 """
 @package    SlicePicker
-@brief
+@brief      Contains classes allowing to collect, verify and mutate a DNA sequence from a
+Reference object as a Biopython SeqReccord. SlicePickerPair and SlicePickerSingle inherit from
+the superclass SlicePicker which contains the common code.
 @copyright  [GNU General Public License v2](http://www.gnu.org/licenses/gpl-2.0.html)
 @author     Adrien Leger - 2014
 * <adrien.leger@gmail.com>
@@ -22,14 +24,22 @@ from Bio.Alphabet.IUPAC import IUPACUnambiguousDNA as Unambiguous
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
 class SlicePicker(object):
-    """Base class for SlicePickerSingle and SlicePickerPair
+    """
+    @class SlicePicker
+    @ brief Super class containing basic functions to reduce code redondancy in
+    SlicePickerSingle and SlicePickerPair. NOT intended to be instanciated. 
     """
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
     #~~~~~~~FONDAMENTAL METHODS~~~~~~~#
 
     def __init__(self, read_len, repeats, ambiguous, mut_freq=0):
-        """Initialize the class with generic variables
+        """
+        Store generic informations in object variables
+        @param read_len Lenght of the reads to generate (int)
+        @param repeats Allow lowercase characters (repeats) in the read (boolean)
+        @param ambiguous Allow Ambiguous DNA bases in the read (boolean)
+        @param mut_freq Mean frequency of mutations to introduce in the read (float)
         """
         # Definition of a generic mutation frequency
         self.mut_freq = mut_freq
@@ -62,28 +72,35 @@ class SlicePicker(object):
     #~~~~~~~PRIVATE METHODS~~~~~~~#
 
     def _IUPAC_alphabet(self, repeats, ambiguous):
-        """ Define an DNA letters alphabet according to the user
-        specifications (allow repeats, allow ambiguous)
+        """
+        Define an DNA letters alphabet according to the user specifications
+        @param repeats Allow lowercase characters (repeats) in the read (boolean)
+        @param ambiguous Allow Ambiguous DNA bases in the read (boolean)
         """
         alphabet = Ambiguous.letters if ambiguous else Unambiguous.letters
         alphabet = alphabet + alphabet.lower() if repeats else alphabet
         return alphabet
 
     def _valid_sequence(self, seq):
-        """ Verify if the users sequence
+        """
+        Verify if all the letters in sequence returned by the Reference source belongs to the
+        autorized alphabet
+        @return True if the sequence is valid, else False (bool)
         """
         return all([(base in self.alphabet) for base in seq])
 
     def _mutate_sequence(self, read):
-        """Introduce mutations in a biopython record"""
+        """
+        Scan a Seq object lenght with a probability to introduce mutations a the defined frequency
+        @param read A seq object extracted from a biopython SeqRecord.
+        @return The read with eventual mutations
+        """
 
         read.annotations ["Mutations"] = []
-
         if self.mut_freq != 0:
-
+            
             # Change Seq to mutable object
             seq = read.seq.tomutable()
-
             for i in range(len(seq)):
                 if random() < self.mut_freq:
                     original_base = seq[i]
@@ -96,22 +113,38 @@ class SlicePicker(object):
         return read
 
     def _mutate_base(self, base):
-        """return a DNA base different from the given base"""
-        return sample([mut_base for mut_base in Unambiguous.letters if mut_base not in base.upper()],1)[0]
+        """
+        Return a DNA base different from the given base
+        @param base A DNA base (may be ambigous)
+        @return A different non ambiguous DNA base
+        """
+        return sample([mut_base for mut_base in ['A','T','C','G'] if mut_base not in base.upper()],1)[0]
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
 class SlicePickerSingle(SlicePicker):
-    """For single read sampling
+    """
+    @class SlicePickerSingle
+    @ Collect a slice, verify and mutate the DNA sequence from a Reference source and return de
+    single read
     """
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
     #~~~~~~~PUBLIC METHODS~~~~~~~#
 
     def pick_slice(self, source):
-        """Generate a candidate read. The presence or absence of repeats
-        and ambiguous DNA bases can be checked and a given frequency of
-        bases can be randomly mutated
+        """
+        Generate a candidate read (or slice). The presence or absence of repeats and ambiguous
+        DNA bases can be checked and a given frequency of bases can be mutated randomly.
+        @param source Reference object source where the read have to be sampled
+        @return A slice from the source with eventual mutations. The SeqRecord annotations dict 
+        contains several informations :
+        * orientation : Orientation along the source ref sequence
+        * refseq : Name of the source ref sequence
+        * location : start end position along the source ref sequence
+        * source : Pointer to the source Reference object
+        * mutation : List of mutations introduced in the sequence
+        @exception Exception Generic exception raise if no valid sequence was found after 100 tries
         """
         # Guard condition if not possible to find a valid pair after 100 tries
         for count in range(100):
@@ -142,8 +175,16 @@ class SlicePickerPair(SlicePicker):
 
     def __init__(self, read_len, sonic_min, sonic_mode, sonic_max, sonic_certainty, repeats,
                  ambiguous, mut_freq):
-        """Surdefine the super class init by adding sonication
-        parameters
+        """
+        Surdefine the super class init by adding sonication parameters
+        @param read_len Lenght of the reads to generate (int)
+        @param repeats Allow lowercase characters (repeats) in the read (boolean)
+        @param ambiguous Allow Ambiguous DNA bases in the read (boolean)
+        @param mut_freq Mean frequency of mutations to introduce in the read (float)
+        @param sonic_min    Minimal size of sonication fragments (int)
+        @param sonic_mode   Modal size of sonication fragments (int)
+        @param sonic_max    Maximal size of sonication fragments (int)
+        @param sonic_certainty  Thickness of the sonication peak (int)
         """
         # Use the super class init method
         super(self.__class__, self).__init__(read_len, repeats, ambiguous, mut_freq)
@@ -159,8 +200,6 @@ class SlicePickerPair(SlicePicker):
         self.alpha, self.beta = self._beta_shape()
 
     def __repr__(self):
-        """Long representation
-        """
         descr = super(self.__class__, self).__repr__()
         descr += "Sonication minimum {}\n".format(self.sonic_min)
         descr += "Sonication mode {}\n".format(self.sonic_mode)
@@ -193,11 +232,25 @@ class SlicePickerPair(SlicePicker):
     #~~~~~~~PUBLIC METHODS~~~~~~~#
 
     def pick_slice(self, source):
-        """Generate a candidate read pair from a fragment of a length
-        following a distribution mimicking sonication smire. The
-        presence or absence of repeats and ambiguous DNA bases can be
-        checked and a given frequency of bases can be randomly mutated
-         """
+        """
+        Generate a candidate read pair of a length following a distribution mimicking sonication 
+        smire. The presence or absence of repeats and ambiguous DNA bases can be checked and a
+        given frequency of bases can be mutated randomly.
+        
+        @param source Reference object source where the read have to be sampled
+        @return A pair of slice from the source with eventual mutations (tuple)
+        The SeqRecord annotations dict 
+        contains several informations for both read:
+        * orientation : Orientation along the source ref sequence
+        * refseq : Name of the source ref sequence
+        * location : start end position along the source ref sequence
+        * source : Pointer to the source Reference object
+        * mutation : List of mutations introduced in the sequence
+        * mate : R1 or R2 as for pair end reads
+        * frag_len : 
+        * pair_overlap
+        @exception Exception Generic exception raise if no valid sequence was found after 100 tries
+        """
 
         # Guard condition if not possible to find a valid pair after 100 tries
         for count in range(100):
@@ -212,7 +265,7 @@ class SlicePickerPair(SlicePicker):
                 exit (0)
 
             # Extract pair reads from slice
-            read1, read2 = self._extract_pair(fragment, source)
+            read1, read2 = self._extract_pair(fragment)
 
             # Verify the validity of the candidate sequence
             if self._valid_sequence(str(read1.seq)) and self._valid_sequence(str(read2.seq)):
@@ -225,22 +278,27 @@ class SlicePickerPair(SlicePicker):
     #~~~~~~~PRIVATE METHODS~~~~~~~#
 
     def _beta_shape(self):
-        """Calculate shape parameters alpha and beta to fit experimental
-        indication from user
+        """
+        Calculate shape parameters alpha and beta to mimick a sonication asymetric smire
+        @return alpha and beta parameters (tuple of float)
         """
         alpha = float(self.sonic_mode-self.sonic_min) / (self.sonic_max-self.sonic_min) * (self.sonic_certainty-2) + 1
         beta = self.sonic_certainty - alpha
         return(alpha, beta)
 
     def _beta_distrib(self):
-        """Define a pseudorandom size according to a beta distribution
-        giving alpha and beta
+        """
+        Define a pseudorandom size according to a beta distribution giving alpha and beta,
+        comprise between sonic_min and sonic_max
+        @return A size of the fragment (int)
         """
         return int(betavariate(self.alpha, self.beta) * (self.sonic_max - self.sonic_min) + self.sonic_min)
 
-    def _extract_pair(self, fragment, source):
-        """Extract reads forward and reverse from a fragment sequence
-        and return a list with name, and both records
+    def _extract_pair(self, fragment):
+        """
+        Extract reads forward and reverse from a fragment sequence
+        @param fragment SeqRecord fragment from which a pair at extremities needs to be extracted
+        @return A pair of forward and reverse read as SeqRecords (tuple)
         """
         # Extract forward and reverse reads
         forward = fragment[:self.read_len]
@@ -257,7 +315,11 @@ class SlicePickerPair(SlicePicker):
         return(forward, reverse)
 
     def _annotate_read (self, fragment, mate):
-        """Extract annotations for each of the reads from a pair
+        """
+        Extract annotations for reads in a pair.
+        @param fragment SeqRecord fragment from which a pair at extremities needs to be extracted
+        @param mate R1 or R2 
+        @return A dictionary of annotations to be attributed to the SeqRecord object
         """
         # Define shortcuts
         f_start = fragment.annotations["location"][0]

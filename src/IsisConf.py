@@ -18,6 +18,7 @@ exit.
 
 # Standard library packages
 from sys import exit as sys_exit
+from imp import find_module
 import ConfigParser
 import optparse
 
@@ -62,18 +63,17 @@ class IsisConf(object):
         @param program_name Name of the program
         @param program_version Version of the program
         """
-
-        print "Parsing and verification of config file with IsisConf"
+        print "Set-up of the program parameters..."
         ## Dictionnary to store valid parameters from command line arguments and configuration file
         self.d = {}
 
         #~~~Parse command line argument~~~#
-
+        print "\tParsing command-line arguments"
         # add hg_filename, vg_filename, conf_filename and output_prefix entries to self.d
         self.d.update (self._optparser(program_name, program_version))
 
         #~~~Extract configuration parameters from the conf file~~~#
-
+        print "\tParsing configuration file"
         ## Instance of RawConfigParser
         self.config = ConfigParser.RawConfigParser(allow_no_value = False)
 
@@ -125,7 +125,26 @@ class IsisConf(object):
          #~QUALITY SECTION~#
         self.d.update (self._get_str ( "Quality", "qual_scale", ["fastq-sanger", "fastq-solexa", "fastq-illumina"]))
         self.d.update (self._get_str ( "Quality", "qual_range", ["very-good", "good", "medium", "bad", "very-bad"]))
-
+        
+        #~~~Check third party dependencies~~~#
+        print "\tChecking third party dependencies"
+        
+        try:
+            find_module('Bio')
+            print("\t\tBiopython package is available")
+        except ImportError:
+            raise IsisConfException ("Biopython package is required")
+        
+        if self.d["graph"]:
+            try:
+                find_module('matplotlib')
+                print("\t\tmatplotlib package is available")
+            except ImportError:
+                print ("\t\tmatplotlib package is required for graphical output")
+                print ("\t\t\tSwitching to non graphical mode")
+                self.d["graph"] = False
+                
+                
     def __repr__ (self):
         # A key list is created to output a sorted list of dict entries
         key_list = self.d.keys()
@@ -183,12 +202,12 @@ class IsisConf(object):
         options, args = optparser.parse_args()
 
         # Validate option and generate a dictionnary
-        arg_dict = {'host_genome' : self._check_file (options.hg, "--host_genome | -H"),
-                    'virus_genome' : self._check_file (options.vg, "--virus_genome | -V "),
-                    'conf_file' : self._check_file (options.conf, "conf_file | -C"),
+        arg_dict = {'host_genome' : self._check_file (options.hg, "host_genome"),
+                    'virus_genome' : self._check_file (options.vg, "virus_genome "),
+                    'conf_file' : self._check_file (options.conf, "conf_file"),
                     'basename' : options.output,
                     'pair' : self._check_mode (options.single, options.pair)}
-
+                    
         return arg_dict
 
     def _check_file (self, path, descr):
@@ -204,6 +223,7 @@ class IsisConf(object):
         try:
             handle = open(path, "r")
             handle.close()
+            print ("\t\tValid file for {}".format (descr))
             return path
 
         except IOError:
@@ -230,7 +250,7 @@ class IsisConf(object):
         @param section Name of the section in the configuration file where the option is (string)
         @param name Name of the option (string)
         @param min Minimal value (integer)
-        @param min Maximal value (integer)
+        @param max Maximal value (integer)
         @return An integer within the requested range
         """
         try:
@@ -260,7 +280,7 @@ class IsisConf(object):
         @param section Name of the section in the configuration file where the option is (string)
         @param name Name of the option (string)
         @param min Minimal value (float)
-        @param min Maximal value (float)
+        @param max Maximal value (float)
         @return A float within the requested range
         """
         try:

@@ -303,7 +303,6 @@ def write_samp_report ():
 
     return 1
 
-
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~MAIN FUNCTION~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
 if __name__ == '__main__':

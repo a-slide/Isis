@@ -78,7 +78,7 @@ def file_extension (path):
     Return the extension of a file.
     @param path Filepath as a string
     """
-    return path.partition(".")[2]
+    return path.rpartition(".")[2]
 
 def file_name (path):
     """
@@ -104,8 +104,10 @@ def import_fasta(filename, col_type="dict"):
     @return A list or a dictionnary containing all seqReccord objects from the fastq file
     @exception IOError  Raise if the path in invalid or unreadeable
     """
+
     # Require the Third party package Biopython
     from Bio import SeqIO
+    import gzip
 
     # Try to open the file fist gz compressed and uncompressed
     try:

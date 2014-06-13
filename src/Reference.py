@@ -443,7 +443,7 @@ class ReferenceJunctions(Reference):
         @param refsource Indicates if the source reference sequence is the left
         part ("ref1") or the right part ("ref2") of the junction
         @param start Start coordinate relative to the start of the reference
-        @param start End coordinate relative to the start of the reference
+        @param end End coordinate relative to the start of the reference
         @return A string composed of the id of the source reference followed by
         start and end coordinates on the source reference (ex : chr12:124-434 )
         """

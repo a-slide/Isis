@@ -1,12 +1,12 @@
 """
 @package    QualGenerator
 @brief  **Generate list of quality PHRED quality values mimicking illumina quality score.**
-Briefly, 5 templates define very good, good, medium, bad and very bad quality at 5 distributed
-positions. According to the lenght of reads to generate, a object specific pattern will be
-calculated at class instantiation. From these templates, "random guided" quality quality strings
-can be generated. It will follow the object pattern thanks to a coefficient of attraction toward
-pattern mean but with a part of randomness thank a gaussian distribution according to pattern
-standard deviation.
+Briefly, the program contains 5 predefined templates very good, good, medium, bad and very 
+bad quality at 5 distributed positions. According to the lenght of reads to generate, a object
+specific pattern will be calculated at class instantiation. From these templates,
+"random guided" quality quality strings can be generated. It will follow the object pattern
+thanks to a coefficient of attraction towards the pattern mean but with a part of randomness
+thank a gaussian distribution according to pattern standard deviation.
 @copyright  [GNU General Public License v2](http://www.gnu.org/licenses/gpl-2.0.html)
 @author     Adrien Leger - 2014
 * <adrien.leger@gmail.com>
@@ -125,7 +125,7 @@ class QualGenerator(object):
         """Define a quality pattern for every positions in a given
         lenght based on quality parameters depending of the user defined
         quality range.
-        @param lenght   Length of the quality scores list to generate
+        @param length   Length of the quality scores list to generate
         @param qual_range   Range of quality of scores to generate
         @return A list for each positions in the lenght containing the mean and the standard dev
         """
@@ -153,10 +153,10 @@ class QualGenerator(object):
 
         return qual_pattern
 
-    def _quality_parameters(self, length, quality):
+    def _quality_parameters(self, length, qual_range):
         """Create a quality template for 5 points in a given lenght based on 5 predefined quality
         range very-good, good, medium, bad and very-bad.
-        @param lenght   Length of the quality scores list to generate
+        @param length   Length of the quality scores list to generate
         @param qual_range   Range of quality of scores to generate
         @return A list for 5 points in the lenght containing the mean, the quality and the position
         """
@@ -185,4 +185,4 @@ class QualGenerator(object):
         "bad": [[20, 25, 27, 23, 15], [4, 3, 2, 7, 8], [0, a1, a2, a3, a4]],
         "very-bad": [[10, 15, 15, 10, 5], [4, 3, 2, 8, 8], [0, a1, a2, a3, a4]]}
 
-        return qual_param_dict[quality]
+        return qual_param_dict[qual_range]
