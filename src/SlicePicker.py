@@ -117,7 +117,7 @@ class SlicePickerSingle(SlicePicker):
         for count in range(100):
             # Ask a random sequence to the source
             try:
-                read = source.get_slice(self.read_len)
+                read = source.slicer(self.read_len)
             except Exception as e:
                 print e
                 exit (0)
@@ -206,7 +206,7 @@ class SlicePickerPair(SlicePicker):
 
             # Ask a random sequence to the source
             try:
-                fragment = source.get_slice(frag_len)
+                fragment = source.slicer(frag_len)
             except Exception as e:
                 print e
                 exit (0)

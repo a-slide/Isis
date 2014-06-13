@@ -29,8 +29,8 @@ import gzip
 
 # Local packages
 from IsisConf import IsisConf, IsisConfException
-from ReferenceGenome import ReferenceGenome as RefGen
-from ReferenceJunctions import ReferenceJunctions as RefJun
+from Reference import ReferenceGenome as RefGen
+from Reference import ReferenceJunctions as RefJun
 from SlicePicker import SlicePickerSingle, SlicePickerPair
 from QualGenerator import QualGenerator
 from FastqGenerator import FastqGeneratorSingle, FastqGeneratorPair

@@ -6,6 +6,7 @@ ISIS generates random insertion sites of a given viral DNA in an host DNA and ou
 
 ## Principle
 
+![""](./doc/img/Design.svg)
 
 ## Get Isis
 
@@ -47,7 +48,11 @@ The programm was developed under Linux Mint 16 "petra" but is compatible with ot
 * [Logbook](http://nbviewer.ipython.org/github/a-slide/Isis/blob/master/doc/Logbook.ipynb)
 
 ## Authors and Contact
-Adrien Leger @a-slide
 
-adrien.leger@inserm.fr
+Adrien Leger - 2014
+* <adrien.leger@gmail.com>
+* <adrien.leger@inserm.fr>
+* <adrien.leger@univ-nantes.fr>
+* [Github](https://github.com/a-slide)
+* [Atlantic Gene Therapies - INSERM 1089] (http://www.atlantic-gene-therapies.fr/)
 

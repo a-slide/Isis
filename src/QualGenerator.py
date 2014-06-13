@@ -1,6 +1,6 @@
 """
 @package    QualGenerator
-@brief  **Generate list of quality PHRED quality values mimicking illumina quality pattern.**
+@brief  **Generate list of quality PHRED quality values mimicking illumina quality score.**
 Briefly, 5 templates define very good, good, medium, bad and very bad quality at 5 distributed
 positions. According to the lenght of reads to generate, a object specific pattern will be
 calculated at class instantiation. From these templates, "random guided" quality quality strings
@@ -26,7 +26,7 @@ class QualGenerator(object):
     """
     @class QualGenerator
     @brief Generate list of quality PHRED quality values mimicking illumina quality score.
-    A pattern is created at object instantiation following en read lenght and a quality range mold.
+    A pattern is created at object instantiation following a read lenght and a quality range.
     It contains a mean and a standard deviation for all positions in the defined lenght. This mold
     is used to generate a list of quality scores when calling qual_score() function.
     """
@@ -74,8 +74,8 @@ class QualGenerator(object):
 
     def qual_score(self):
         """
-        Generate a list of PHRED values mimicking a real Illumina fastq quality score.
-         Based on the pattern defined an class instanciation.
+        Generate a list of PHRED values mimicking an Illumina fastq quality score.
+        Based on the qual_pattern defined at class instanciation.
 
         """
         # Create an empty list to store scores
@@ -103,22 +103,33 @@ class QualGenerator(object):
 
     #~~~~~~~PRIVATE METHODS~~~~~~~#
 
-    def _valid_score(self, qual_mean, sigma): # sigma >= 1
+    def _valid_score(self, qual_mean, sigma):
         """Calculate a new valid score to based on the mean score and a
         stochastic gaussian fluctuation following standard deviation.
+        @param qual_mean Mean quality score for this position
+        @param sigma Standard deviation for this position
+        @return A score calculated following a gaussian distribution with exclusion of values >40
+        or <0
         """
         score = qual_mean + int(gauss(0, sigma))
         # if the score is outside of Phred quality borders (0 to 40).
         # the part coresponding to the gaussian fluctuation will not be
         # took into acount
-        return score if 0 <= score <= 40 else qual_mean
+        if score < 0:
+            return 0
+        if score > 40:
+            return 40
+        return score
 
-    def _quality_pattern(self, length, quality):
+    def _quality_pattern(self, length, qual_range):
         """Define a quality pattern for every positions in a given
         lenght based on quality parameters depending of the user defined
         quality range.
+        @param lenght   Length of the quality scores list to generate
+        @param qual_range   Range of quality of scores to generate
+        @return A list for each positions in the lenght containing the mean and the standard dev
         """
-        qual_param = self._quality_parameters(length, quality)
+        qual_param = self._quality_parameters(length, qual_range)
 
         # Create a smoothed pattern of quality mean and sd for each
         # positions in all areas of the read.
@@ -143,8 +154,11 @@ class QualGenerator(object):
         return qual_pattern
 
     def _quality_parameters(self, length, quality):
-        """Return quality parameters at borders of 4 areas within the
-        lenght (mean, sd and length).
+        """Create a quality template for 5 points in a given lenght based on 5 predefined quality
+        range very-good, good, medium, bad and very-bad.
+        @param lenght   Length of the quality scores list to generate
+        @param qual_range   Range of quality of scores to generate
+        @return A list for 5 points in the lenght containing the mean, the quality and the position
         """
         # Calculate the lenght of each quality area in the read
         a1 = int(0.1*length)
