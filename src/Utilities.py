@@ -12,10 +12,11 @@
 
 #~~~~~~~COMMAND LINE UTILITIES~~~~~~~#
 
-def run_shell(cmd):
+def run_command(cmd, stdinput=None):
     """
     Run a command line in the default shell and return the standard output
     @param  cmd a command line string formated as a string
+    @param  stdinput Facultative parameters to redirect an object to the standard input
     @return If no standard error return the standard output as a string
     @exception  OSError Raise if a message is return on the standard error output
     @exception  (ValueError,OSError) May be raise by Popen
@@ -28,7 +29,11 @@ def run_shell(cmd):
 
     # Try to execute the command line in the default shell
     try:
-        stdout, stderr = Popen(cmd, shell=True, stdout=PIPE, stderr=PIPE).communicate()
+        if stdinput:
+            stdout, stderr = Popen(cmd, shell=True, stdin=PIPE, stdout=PIPE, stderr=PIPE).communicate(input=stdinput)
+        else:
+            stdout, stderr = Popen(cmd, shell=True, stdout=PIPE, stderr=PIPE).communicate()
+
         # If a message is returned on the std err output an SystemError is raised
         if stderr:
             raise OSError("{}\n{}".format(msg, stderr))
@@ -96,21 +101,34 @@ def dir_name (path):
 
 #~~~~~~~FASTA UTILITIES~~~~~~~#
 
-def import_fasta(filename, col_type="dict"):
+def import_seq(filename, col_type="dict", seq_type="fasta"):
     """
     Import sequences from a fasta files in a list of biopython SeqRecord
     @param filename Valid path to a fasta file. Can contains several sequences and can be gzipped
-    @param col_type Type of the collection where SeqReccord entries will be added "list" or "dict".
+    @param col_type Type of the collection where SeqReccord entries will be added ("list" or "dict").
+    @param seq_type Type of the sequence file to parse (see Biopython seqIO for supported format)
     @return A list or a dictionnary containing all seqReccord objects from the fastq file
     @exception IOError  Raise if the path in invalid or unreadeable
     """
-
     # Require the Third party package Biopython
     from Bio import SeqIO
     import gzip
 
     # Try to open the file fist gz compressed and uncompressed
     try:
+
+        # Verify if the type of the input sequence is valid
+        seq_type = seq_type.lower()
+        allowed_seq = ["fasta", "genbank", "gb", "fastq-illumina", "fastq-solexa" , "fastq",
+        "fastq-sanger", "embl ", "abi ", "seqxml", "sff", "uniprot-xml"]
+        assert seq_type in allowed_seq , "The input file format have to be in the following list : "+ ", ".join(allowed_seq)
+
+        # Verify if the type of the output collection is valid
+        col_type = col_type.lower()
+        allowed_types = ["dict", "list"]
+        assert col_type  in allowed_types, "The output collection type have to be in the following list : "+ ", ".join(allowed_types)
+
+        # Open gzipped or uncompressed file
         if file_extension(filename) == "gz":
             print("\tUncompressing and extracting data")
             handle = gzip.open(filename, "r")
@@ -118,15 +136,61 @@ def import_fasta(filename, col_type="dict"):
             print("\tExtracting data")
             handle = open(filename, "r")
 
+        # Create the collection
         if col_type == "list":
-            seq_col = list(SeqIO.parse(handle, "fasta"))
+            seq_col = list(SeqIO.parse(handle, seq_type))
         else:
-            seq_col = SeqIO.to_dict(SeqIO.parse(handle, "fasta"))
+            seq_col = SeqIO.to_dict(SeqIO.parse(handle, seq_type))
 
+        # Close file, verify if the collection is filled and returned it
         handle.close()
+        assert seq_col, 'The collection contains no SeqRecord after file parsing. Exit'
         return seq_col
 
-    # Try to open the file fist gz compressed and uncompressed
     except IOError as E:
         print('CRITICAL ERROR. The fasta file ' + filename + ' is not readable. Exit')
         exit
+
+    except AssertionError as E:
+        print (E)
+        exit
+
+#~~~~~~~GRAPHICAL UTILIES~~~~~~~#
+
+def fill_between_graph (X, Y, basename="out", img_type="png", title=None, xlabel=None, ylabel=None, baseline=0):
+    """
+    Trace a generic fill between graph with matplotlib pyplot
+    @param X List of values for x axis
+    @param Y List of values for y axis
+    @param title Title of graph (facultative)
+    @param xlabel Label for x axis (facultative)
+    @param ylabel Label for y axis (facultative)
+    @param basename Output basename of the image file (Default "out")
+    @param img_type Type of the image file (Default "png")
+    """
+
+    # Require the Third party package Biopython
+    from matplotlib import pyplot as plt
+
+    # Create a figure object and adding details
+    fig = plt.figure(figsize=(15, 10), dpi=100)
+    if title:
+        plt.title(title)
+    if xlabel:
+        plt.xlabel(xlabel)
+    if ylabel:
+        plt.ylabel(ylabel)
+
+    # Plot an area representing the coverage depth
+    plt.fill_between(X, Y, baseline, facecolor='green', alpha=0.5)
+
+    # Tweak spacing to prevent clipping of ylabel
+    plt.subplots_adjust(left=0.15)
+
+    # Export figure to file
+    try:
+        fig.savefig(basename+"."+img_type, format = img_type)
+    except ValueError as E:
+        print (E)
+        print ("Saving file as png")
+        fig.savefig(basename+".png", format = "png")

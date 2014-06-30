@@ -27,7 +27,7 @@ class SlicePicker(object):
     """
     @class SlicePicker
     @ brief Super class containing basic functions to reduce code redondancy in
-    SlicePickerSingle and SlicePickerPair. NOT intended to be instanciated. 
+    SlicePickerSingle and SlicePickerPair. NOT intended to be instanciated.
     """
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
@@ -98,7 +98,7 @@ class SlicePicker(object):
 
         read.annotations ["Mutations"] = []
         if self.mut_freq != 0:
-            
+
             # Change Seq to mutable object
             seq = read.seq.tomutable()
             for i in range(len(seq)):
@@ -137,7 +137,7 @@ class SlicePickerSingle(SlicePicker):
         Generate a candidate read (or slice). The presence or absence of repeats and ambiguous
         DNA bases can be checked and a given frequency of bases can be mutated randomly.
         @param source Reference object source where the read have to be sampled
-        @return A slice from the source with eventual mutations. The SeqRecord annotations dict 
+        @return A slice from the source with eventual mutations. The SeqRecord annotations dict
         contains several informations :
         * orientation : Orientation along the source ref sequence
         * refseq : Name of the source ref sequence
@@ -147,7 +147,7 @@ class SlicePickerSingle(SlicePicker):
         @exception Exception Generic exception raise if no valid sequence was found after 100 tries
         """
         # Guard condition if not possible to find a valid pair after 100 tries
-        for count in range(100):
+        for count in range(1000):
             # Ask a random sequence to the source
             try:
                 read = source.slicer(self.read_len)
@@ -233,13 +233,13 @@ class SlicePickerPair(SlicePicker):
 
     def pick_slice(self, source):
         """
-        Generate a candidate read pair of a length following a distribution mimicking sonication 
+        Generate a candidate read pair of a length following a distribution mimicking sonication
         smire. The presence or absence of repeats and ambiguous DNA bases can be checked and a
         given frequency of bases can be mutated randomly.
-        
+
         @param source Reference object source where the read have to be sampled
         @return A pair of slice from the source with eventual mutations (tuple)
-        The SeqRecord annotations dict 
+        The SeqRecord annotations dict
         contains several informations for both read:
         * orientation : Orientation along the source ref sequence
         * refseq : Name of the source ref sequence
@@ -247,13 +247,13 @@ class SlicePickerPair(SlicePicker):
         * source : Pointer to the source Reference object
         * mutation : List of mutations introduced in the sequence
         * mate : R1 or R2 as for pair end reads
-        * frag_len : 
+        * frag_len :
         * pair_overlap
         @exception Exception Generic exception raise if no valid sequence was found after 100 tries
         """
 
         # Guard condition if not possible to find a valid pair after 100 tries
-        for count in range(100):
+        for count in range(1000):
             # Generate a random size following a beta distribution
             frag_len = self._beta_distrib()
 
@@ -318,7 +318,7 @@ class SlicePickerPair(SlicePicker):
         """
         Extract annotations for reads in a pair.
         @param fragment SeqRecord fragment from which a pair at extremities needs to be extracted
-        @param mate R1 or R2 
+        @param mate R1 or R2
         @return A dictionary of annotations to be attributed to the SeqRecord object
         """
         # Define shortcuts

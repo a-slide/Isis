@@ -137,8 +137,8 @@ def write_fastq_pair (fastgen):
     @param  fastgen Instance of FastqGenerator
     """
     try:
-        f1 = gzip.open(BASENAME + ".R1.fastq.gz", 'w')
-        f2 = gzip.open(BASENAME + ".R2.fastq.gz", 'w')
+        f1 = gzip.open(BASENAME + "_R1.fastq.gz", 'w')
+        f2 = gzip.open(BASENAME + "_R2.fastq.gz", 'w')
 
         for source, nread in SOURCE_LIST:
             print ("\tWritting {} read(s) in Fastq file from {}".format(nread, source.getName()))

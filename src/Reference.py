@@ -19,7 +19,7 @@ from random import random, randint, sample
 import gzip
 
 # Local packages
-from Utilities import import_fasta
+from Utilities import import_seq
 from SlicePicker import SlicePickerSingle
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
@@ -134,7 +134,7 @@ class ReferenceGenome(Reference):
         super(self.__class__, self).__init__(name)
 
         # Dictionnary of bioPython record created from fasta file
-        self.d = import_fasta(fasta_path)
+        self.d = import_seq(fasta_path, "dict", "fasta")
 
         # Initialize a counter for each reference that will be
         # incremented each time _random_slice choose this reference
