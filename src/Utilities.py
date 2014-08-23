@@ -12,11 +12,16 @@
 
 #~~~~~~~COMMAND LINE UTILITIES~~~~~~~#
 
-def run_command(cmd, stdinput=None):
+def run_command(cmd, stdinput=None, control_stderr=True, ret_stderr=False, ret_stdout=True):
     """
     Run a command line in the default shell and return the standard output
-    @param  cmd a command line string formated as a string
-    @param  stdinput Facultative parameters to redirect an object to the standard input
+    @param  cmd A command line string formated as a string
+    @param  stdinput    Facultative parameters to redirect an object to the standard input
+    @param  control_stderr   If True the standard error output will be verified
+    @param  ret_stderr  If True the standard error output will be returned
+    @param  ret_stdout  If True the standard output will be returned
+    @note If ret_stderr and ret_stdout are True a tuple will be returned and if both are False
+    None will be returned
     @return If no standard error return the standard output as a string
     @exception  OSError Raise if a message is return on the standard error output
     @exception  (ValueError,OSError) May be raise by Popen
@@ -35,16 +40,51 @@ def run_command(cmd, stdinput=None):
             stdout, stderr = Popen(cmd, shell=True, stdout=PIPE, stderr=PIPE).communicate()
 
         # If a message is returned on the std err output an SystemError is raised
-        if stderr:
+        if control_stderr and stderr:
             raise OSError("{}\n{}".format(msg, stderr))
-        # Else the std output data is returned
-        else:
+
+        # Else return data according to user choices is returned
+        if ret_stdout and ret_stderr:
+            return stdout, stderr
+        elif ret_stdout:
             return stdout
+        elif ret_stderr:
+            return sterr
+        else:
+            return None
 
     # Take care of possible exceptions returned by Popen
     except (OSError, ValueError) as E:
         print (E)
 
+def make_cmd_str(prog_name, opt_dict={}, opt_list=[]):
+    """
+    Create a Unix like command line string from a
+    @param prog_name Name (if added to the system path) or path of the programm
+    @param opt_dict Dictionnary of option arguments such as "-t 5". The option flag have to
+    be the key (without "-") and the the option value in the dictionnary value. If no value is
+    requested after the option flag "None" had to be asigned to the value field.
+    @param opt_list List of simple command line arguments
+    @exemple make_cmd_str("bwa", {"b":None, t":6, "i":"../idx/seq.fa"}, ["../read1", "../read2"])
+    """
+
+    # Start the string by the name of the program
+    cmd = "{} ".format(prog_name)
+
+    # Add options arguments from opt_dict
+    if opt_dict:
+        for key, value in opt_dict.items():
+            if value:
+                cmd += "-{} {} ".format(key, value)
+            else:
+                cmd += "-{} ".format(key)
+
+    # Add arguments from opt_list
+    if opt_list:
+        for value in opt_list:
+            cmd += "{} ".format(value)
+
+    return cmd
 
 #~~~~~~~FILE MANIPULATION~~~~~~~#
 
@@ -59,17 +99,11 @@ def mkdir(fp):
     # Function specific imports
     from os import mkdir, path
 
-    try:
-        if path.exists(fp) and path.isdir(fp):
-            print ("'{}' already exist in the current directory".format(fp))
-        else:
-            print ("Creating '{}' in the current directory".format(fp))
-            mkdir(fp)
-
-    # In case
-    except OSError as E:
-        print E
-        raise
+    if path.exists(fp) and path.isdir(fp):
+        print ("'{}' already exist in the current directory".format(fp))
+    else:
+        print ("Creating '{}' in the current directory".format(fp))
+        mkdir(fp)
 
 def file_basename (path):
     """

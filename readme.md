@@ -6,7 +6,7 @@ ISIS generates random insertion sites of a given viral DNA in an host DNA and ou
 
 ## Principle
 
-![""](./doc/img/Design.svg)
+![""](./doc/img/ISiSDesign.png)
 
 ## Get Isis
 
