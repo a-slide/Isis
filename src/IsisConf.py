@@ -125,16 +125,16 @@ class IsisConf(object):
          #~QUALITY SECTION~#
         self.d.update (self._get_str ( "Quality", "qual_scale", ["fastq-sanger", "fastq-solexa", "fastq-illumina"]))
         self.d.update (self._get_str ( "Quality", "qual_range", ["very-good", "good", "medium", "bad", "very-bad"]))
-        
+
         #~~~Check third party dependencies~~~#
         print "\tChecking third party dependencies"
-        
+
         try:
             find_module('Bio')
             print("\t\tBiopython package is available")
         except ImportError:
             raise IsisConfException ("Biopython package is required")
-        
+
         if self.d["graph"]:
             try:
                 find_module('matplotlib')
@@ -143,8 +143,8 @@ class IsisConf(object):
                 print ("\t\tmatplotlib package is required for graphical output")
                 print ("\t\t\tSwitching to non graphical mode")
                 self.d["graph"] = False
-                
-                
+
+
     def __repr__ (self):
         # A key list is created to output a sorted list of dict entries
         key_list = self.d.keys()
@@ -207,7 +207,7 @@ class IsisConf(object):
                     'conf_file' : self._check_file (options.conf, "conf_file"),
                     'basename' : options.output,
                     'pair' : self._check_mode (options.single, options.pair)}
-                    
+
         return arg_dict
 
     def _check_file (self, path, descr):

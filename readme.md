@@ -25,8 +25,19 @@ $ sudo chmod u+x Isis.py
 ```
 
 ## Usage
+
 ``` bash
-$ ./Isis.py ......
+Usage: IsisMain.py -H Host_genome.fa[.gz] -V Viral_genome.fa[.gz] -C Conf_file.txt [-o Output_prefix] [-p |-s]
+
+Options:
+  --version             show program's version number and exit
+  -h, --help            show this help message and exit
+  -H, --host_genome     Path of the fasta file containing the host genome sequence (can be gziped)
+  -V, --virus_genome    Path of the fasta file containing the viral genome sequence (can be gziped)
+  -C, --conf_file       Path of the configuration text file
+  -o, --output          Facultative option to indicate the name of the output prefix (default = out)
+  -s, --single          Facultative option to indicate the name of the output prefix
+  -p, --pair            Pair end mode incompatible with -s option (default mode)
 ```
 
 ### Configuration file
