@@ -225,18 +225,20 @@ def frag_len_graph ():
     # Create a figure object and adding details
     fig = plt.figure(figsize=(15, 10), dpi=100)
     plt.title("Distribution of fragment length")
-    plt.ylabel('Relative Count')
+    plt.ylabel('Count')
     plt.xlabel('Size of fragment')
 
     # Plot value from FRAG_LEN list in an histogram reprensentation
-    plt.hist(FRAG_LEN, bins=(SONIC_MAX-SONIC_MIN)/5, range=(SONIC_MIN, SONIC_MAX),
-    normed=1, facecolor='green', alpha=0.5, align='mid')
-
+    
+    bins = logspace(len(str(SONIC_MIN))-1,len(str(SONIC_MAX-1)),125)
+    plt.hist(FRAG_LEN, bins=bins, facecolor='green', alpha=0.5, align='mid',  histtype='stepfilled')
+    plt.gca().set_xscale("log")
+    
     # Tweak spacing to prevent clipping of ylabel
     plt.subplots_adjust(left=0.15)
 
     # Export figure to file
-    fig.savefig(BASENAME+'_distribution.png')
+    fig.savefig(BASENAME+'_distribution.png', format = "png")
 
     return 1
 
@@ -387,6 +389,7 @@ if __name__ == '__main__':
     if GRAPH:
         # Third party package matplotlib imported only if needed
         from matplotlib import pyplot as plt
+        from numpy import logspace
         ## Lenghts of sonication fragments (list)
         FRAG_LEN = []
         ## Read depth over all positions of junctions (list)
